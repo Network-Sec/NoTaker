@@ -1,0 +1,5 @@
+# Frontend environment variables (Vite requires VITE_ prefix)
+VITE_SERVER_PORT=3001
+
+# Backend environment variables (Node.js)
+SERVER_PORT=3001
