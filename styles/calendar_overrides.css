@@ -1,0 +1,223 @@
+/* styles/calendar_overrides.css */
+
+/* General overrides for .react-calendar to match sidebar widget container */
+.react-calendar-monthly {
+    width: 100%;
+    height: 100%; /* Make calendar take full height of parent */
+    border: 1px solid var(--border-color); /* Reverted to previous border style */
+    font-family: Arial, Helvetica, sans-serif;
+    line-height: 1.125em;
+    background-color: var(--surface-color); /* Match sidebar widget background */
+    padding: 0; /* Remove default padding */
+    display: flex; /* Make it a flex container */
+    flex-direction: column; /* Stack children vertically */
+}
+
+/* Navigation */
+.react-calendar-monthly .react-calendar__navigation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem; /* Increased padding */
+    background-color: var(--bg-color);
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 0; /* Remove default margin */
+    min-height: 40px; /* Explicit min-height to prevent collapse */
+}
+
+.react-calendar-monthly .react-calendar__navigation button {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    font-size: 1.2em; /* Increased font size */
+    cursor: pointer;
+    padding: 0.5em 0.8em; /* Increased padding */
+    border-radius: 3px;
+    margin-top: 0;
+}
+
+.react-calendar-monthly .react-calendar__navigation button:hover {
+    background-color: var(--bg-hover-color);
+}
+
+.react-calendar-monthly .react-calendar__navigation__label {
+    font-weight: 500;
+    color: var(--text-color);
+    font-size: 1em; /* Increased font size */
+}
+
+.react-calendar-monthly .react-calendar__navigation__arrow {
+    font-size: 1.2em; /* Increased arrow size */
+    color: var(--text-color);
+}
+
+.react-calendar-monthly .react-calendar__viewContainer {
+    flex-grow: 1; /* Make view container take all available vertical space */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Target the unnamed div child of viewContainer, often an internal wrapper for the calendar view */
+.react-calendar-monthly .react-calendar__viewContainer > div {
+    height: 100%;
+    display: flex; /* Often needs to be flex to pass height down */
+    flex-direction: column;
+}
+
+.react-calendar-monthly .react-calendar__month-view {
+    flex-grow: 1; /* Make month view take all available vertical space */
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* Ensure it takes full height */
+}
+
+/* Month view (days grid) */
+.react-calendar-monthly .react-calendar__month-view__weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr); /* 7 days per row */
+    text-align: center;
+    background-color: var(--bg-color);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.react-calendar-monthly .react-calendar__month-view__weekdays abbr {
+    text-decoration: none;
+    font-weight: bold;
+    color: var(--text-color-light);
+    font-size: 0.9em; /* Increased font size by 0.2em */
+    padding: 5px 0;
+}
+
+.react-calendar-monthly .react-calendar__month-view__days {
+    display: grid !important; /* Force grid display */
+    grid-template-columns: repeat(7, 1fr) !important; /* 7 columns for month view */
+    grid-template-rows: repeat(6, 1fr); /* Distribute height evenly across 6 rows */
+    gap: 0; /* No gap between cells */
+    width: 100%;
+    flex-grow: 1; /* Make days grid take all available vertical space */
+}
+
+.react-calendar-monthly .react-calendar__tile {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+    /* Removed static height */
+    background-color: var(--bg-color);
+    border: 1px solid var(--border-color); /* Reverted to previous border style */
+    border-radius: 0; /* No rounded corners */
+    cursor: grab; /* Match sidebar cursor */
+    transition: background-color 0.2s;
+    position: relative;
+    padding: 2px;
+    box-sizing: border-box;
+    overflow: hidden;
+    max-width: none; /* Override max-width */
+}
+
+.react-calendar-monthly .react-calendar__tile--neighboringMonth {
+    color: var(--text-muted-color); /* Mute days from neighboring months */
+    background-color: var(--surface-color); /* Different background for neighboring months */
+}
+
+.react-calendar-monthly .react-calendar__tile:hover,
+.react-calendar-monthly .react-calendar__tile:enabled:focus {
+    background-color: var(--bg-hover-color); /* Match sidebar hover */
+    border-radius: 0; /* No rounded corners on hover */
+}
+
+.react-calendar-monthly .react-calendar__tile--now {
+    border: 1px solid var(--primary-color); /* Blue border for current day */
+    box-shadow: none;
+    background-color: transparent; /* Transparent background to show regular tile background */
+    color: var(--text-color);
+}
+
+.react-calendar-monthly .react-calendar__tile--now:hover,
+.react-calendar-monthly .react-calendar__tile--now:enabled:focus {
+    background-color: var(--bg-hover-color);
+}
+
+.react-calendar-monthly .react-calendar__tile--active {
+    background-color: var(--primary-color); /* Use primary color for active background */
+    border: 1px solid var(--primary-color); /* Match border to background */
+    box-shadow: none;
+    color: white; /* Ensure text is readable */
+}
+
+.react-calendar-monthly .react-calendar__tile--active:hover,
+.react-calendar-monthly .react-calendar__tile--active:enabled:focus {
+    background-color: var(--bg-hover-color);
+}
+
+/* Specific styling for when a tile is both "now" and "active" */
+.react-calendar-monthly .react-calendar__tile--now.react-calendar__tile--active {
+    background-color: var(--primary-color) !important; /* Force primary color background */
+    color: white !important;
+    border: 1px solid var(--primary-color) !important; /* Maintain blue border */
+}
+
+/* Day number inside tile */
+.react-calendar-monthly .react-calendar__month-view__days__day > abbr {
+    font-size: 1.0em; /* Increased font size by 0.2em */
+    color: var(--text-muted-color);
+    margin: 2px;
+    position: static;
+}
+
+/* Event Bars Container */
+.react-calendar-monthly .event-bars {
+    position: static;
+    display: flex;
+    flex-direction: column; /* Stack event bars vertically */
+    gap: 2px; /* Space between event bars */
+    margin-top: 2px;
+    width: 100%;
+}
+
+/* Individual Event Bar */
+.react-calendar-monthly .event-bar {
+    border-radius: 0; /* No rounded corners, make it square */
+    padding: 4px 6px; /* Increased padding */
+    font-size: 1.0em; /* Increased font size by 0.2em */
+    color: white;
+    text-align: left;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis; /* Truncate long titles */
+    box-sizing: border-box;
+    cursor: pointer; /* Indicate clickability */
+    width: 100%; /* Full width bar */
+    line-height: 1.3; /* Adjust line height for readability */
+}
+
+.react-calendar-monthly .event-bar span:first-child {
+    font-weight: bold; /* Make time bold */
+    margin-right: 4px; /* Space between time and title */
+}
+
+/* Adjustments for different views (year, decade, century) if needed */
+.react-calendar-monthly .react-calendar__year-view .react-calendar__tile,
+.react-calendar-monthly .react-calendar__decade-view .react-calendar__tile,
+.react-calendar-monthly .react-calendar__century-view .react-calendar__tile {
+    padding: 2em 0.5em;
+    color: white;
+}
+
+/* These rules were added from the last read file, verify their purpose */
+.react-calendar__month-view__days {
+    width: 100%;
+    height: 100%;
+    display: flex;
+}
+
+.react-calendar__month-view > div {
+    width: 100%;
+    height: 100%;
+    align-items: flex-start !important;
+}
+
+.react-calendar__month-view > div > div {
+    width: 100%;
+    height: 90%;
+}

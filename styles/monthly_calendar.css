@@ -1,0 +1,42 @@
+/* styles/monthly_calendar.css */
+
+.monthly-calendar-container {
+    padding: 10px;
+    height: 100%; /* Make container take full height */
+    width: 100%; /* Make container take full width */
+    background-color: var(--sidebar-bg-color); /* Assuming a sidebar background */
+    border-radius: 8px;
+    box-shadow: var(--shadow-sm);
+    color: white;
+}
+
+.current-month-events-list {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border-color);
+}
+
+.current-month-events-list h3 {
+    color: var(--text-color-light);
+    margin-bottom: 10px;
+    font-size: 1.1em;
+}
+
+.current-month-events-list ul {
+    list-style: none;
+    padding: 0;
+}
+
+.current-month-events-list li {
+    background-color: var(--bg-dark);
+    border-left: 3px solid var(--accent-color);
+    padding: 8px 10px;
+    margin-bottom: 5px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    color: var(--text-color-primary);
+}
+
+.current-month-events-list li strong {
+    color: var(--text-color-light);
+}
