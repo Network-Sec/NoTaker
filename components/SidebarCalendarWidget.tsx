@@ -63,7 +63,7 @@ export const SidebarCalendarWidget = ({ events, onAddEvent, onDayClick, onEventC
             <div className="calendar-days-grid">
                 {sixteenDayBlock.map(day => {
                     const dayEvents = events.filter(
-                        (evt) => new Date(evt.date).toDateString() === day.toDateString()
+                        (evt) => isSameDay(new Date(evt.date), day)
                     );
                     const isCurrentDay = isSameDay(day, today);
 

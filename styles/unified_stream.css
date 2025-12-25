@@ -12,7 +12,7 @@
     gap: 15px; 
     padding: 0 20px; 
     flex: 1; /* Allow it to take available space */
-    max-width: 650px; /* Optional: set a max-width if needed to control overall width */
+    min-width: 650px; /* Optional: set a max-width if needed to control overall width */
     padding-right: 10px;
 }
 

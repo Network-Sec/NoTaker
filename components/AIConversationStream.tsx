@@ -14,6 +14,7 @@ interface Props {
     aiConversations: AIConversationItem[];
     bookmarks: Bookmark[];
     history: BrowserHistoryEntry[];
+    selectedDate: Date; // Added selectedDate
     // Props for UnifiedStreamItem (passed from index.tsx)
     onTagSelect: (tag: string) => void;
     onUpdateMemo: (id: number, content: string, tags: string[]) => void; // Unused for AI, but for prop drilling
@@ -23,15 +24,17 @@ interface Props {
 }
 
 const AIConversationStreamComponent = (
-  { aiConversations, bookmarks, history, onTagSelect, onUpdateMemo, onDeleteMemo, onOpenImageEditor, onTimestampClick }: Props,
+  { aiConversations, bookmarks, history, selectedDate, onTagSelect, onUpdateMemo, onDeleteMemo, onOpenImageEditor, onTimestampClick }: Props, // Destructure selectedDate
   ref: React.Ref<HTMLDivElement>
 ) => {
     
     const clusters = useMemo(() => {
+        const dayFilter = (d: string) => isSameDay(new Date(d), selectedDate); // Define dayFilter
+        
         const allItems: (AIConversationItem & { itemType: 'ai_conv' }) | (Bookmark & { itemType: 'bookmark' }) | (BrowserHistoryEntry & { itemType: 'history'; timestamp: string; })[] = [
             ...aiConversations.map(m => ({ ...m, itemType: 'ai_conv' as const })),
-            ...bookmarks.map(b => ({ ...b, itemType: 'bookmark' as const })),
-            ...history.map(h => ({ ...h, timestamp: h.visit_time, itemType: 'history' as const }))
+            ...bookmarks.filter(b => dayFilter(b.timestamp)).map(b => ({ ...b, itemType: 'bookmark' as const })), // Filter bookmarks
+            ...history.filter(h => dayFilter(h.visit_time)).map(h => ({ ...h, timestamp: h.visit_time, itemType: 'history' as const })) // Filter history
         ];
 
         // Sort all items chronologically
@@ -85,7 +88,7 @@ const AIConversationStreamComponent = (
                 rightSideItems: interleavedRightSideItems
             };
         });
-    }, [aiConversations, bookmarks, history]);
+    }, [aiConversations, bookmarks, history, selectedDate]); // Add selectedDate to dependencies
 
     if (clusters.length === 0) return <div className="empty-stream">Start a conversation with AI!</div>;
 

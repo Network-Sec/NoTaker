@@ -319,6 +319,14 @@ const App = () => {
     return memos.filter(m => isSameDay(new Date(m.timestamp), selectedDate));
   }, [memos, selectedDate, activeTag]);
 
+  const allBookmarksAndHistory = useMemo(() => {
+    return [...bookmarks, ...history];
+  }, [bookmarks, history]);
+
+  const filteredAIConversations = useMemo(() => {
+    return aiConversations.filter(conv => isSameDay(new Date(conv.timestamp), selectedDate));
+  }, [aiConversations, selectedDate]);
+
   const renderMainView = () => {
     console.log('Current mainView:', mainView);
     switch (mainView) {
@@ -371,7 +379,13 @@ const App = () => {
                     </>
                   ) : (
                     <>
-                      <AIConversationStream ref={aiConversationStreamRef} aiConversations={aiConversations} bookmarks={bookmarks} history={history} />
+                      <AIConversationStream 
+                        ref={aiConversationStreamRef} 
+                        aiConversations={filteredAIConversations} 
+                        bookmarks={bookmarks} 
+                        history={history} 
+                        selectedDate={selectedDate} // Pass selectedDate
+                      />
                       <AIInput 
                         onAddAIConversation={onAddAIConversation} 
                         timestamp={newMemoTimestamp}
@@ -386,7 +400,7 @@ const App = () => {
         );
       case 'gallery': return <GalleryView memos={memos} onImageSelect={d => { setSelectedDate(d); setMainView('dashboard'); }} />;
       case 'notebooks': return <NotebookView notebooks={notebooks} onAddNotebook={addNotebook} onUpdateNotebook={updateNotebook} onDeleteNotebook={deleteNotebook} />;
-      case 'bookmarks': return <BookmarkView bookmarks={bookmarks} onAddBookmark={addBookmark} onDeleteBookmark={deleteBookmark} />;
+      case 'bookmarks': return <BookmarkView allBookmarksAndHistory={allBookmarksAndHistory} onAddBookmark={addBookmark} onDeleteBookmark={deleteBookmark} />;
       case 'ai-notes': return <AiNotesView onAddMemo={addMemo} />;
       case 'toolbox': return <ToolboxView />;
       case 'full-calendar': return (
