@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import type { Bookmark, BrowserHistoryEntry } from '../types';
+import { isSameDay } from '../utils'; // Import isSameDay utility
 import '../styles/bookmark_view.css';
 
 // --- SVG Icons for Legend and Table --- 
@@ -21,6 +22,9 @@ interface BookmarkViewProps {
 export const BookmarkView = ({ allBookmarksAndHistory, onAddBookmark, onDeleteBookmark }: BookmarkViewProps) => {
     const [sortColumn, setSortColumn] = useState('timestamp');
     const [sortDirection, setSortDirection] = useState('desc');
+    const [startDate, setStartDate] = useState<string>(''); // For date input type
+    const [endDate, setEndDate] = useState<string>(''); // For date input type
+    const [searchQuery, setSearchQuery] = useState<string>(''); // New: For search input
 
     const sourceLegend = useMemo(() => {
         const uniqueSources = Array.from(new Set(allBookmarksAndHistory.map(item => item.source || item.itemType))).filter(s => s);
@@ -49,8 +53,40 @@ export const BookmarkView = ({ allBookmarksAndHistory, onAddBookmark, onDeleteBo
         return null;
     }, [sourceLegend]); 
 
-    const sortedItems = useMemo(() => {
-        return [...allBookmarksAndHistory].sort((a, b) => {
+    const filteredAndSortedItems = useMemo(() => {
+        let currentFilteredItems = allBookmarksAndHistory;
+
+        // Apply date filtering
+        if (startDate) {
+            const start = new Date(startDate);
+            start.setHours(0, 0, 0, 0); // Start of the day
+            currentFilteredItems = currentFilteredItems.filter(item => {
+                const itemDate = new Date(item.timestamp);
+                itemDate.setHours(0, 0, 0, 0);
+                return itemDate.getTime() >= start.getTime();
+            });
+        }
+        if (endDate) {
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999); // End of the day
+            currentFilteredItems = currentFilteredItems.filter(item => {
+                const itemDate = new Date(item.timestamp);
+                itemDate.setHours(0, 0, 0, 0); // Compare just dates
+                return itemDate.getTime() <= end.getTime();
+            });
+        }
+
+        // Apply search filtering
+        if (searchQuery) {
+            const lowerCaseQuery = searchQuery.toLowerCase();
+            currentFilteredItems = currentFilteredItems.filter(item => 
+                item.title.toLowerCase().includes(lowerCaseQuery) ||
+                item.url.toLowerCase().includes(lowerCaseQuery)
+            );
+        }
+
+        // Apply sorting
+        return [...currentFilteredItems].sort((a, b) => {
             let aVal: any, bVal: any;
 
             if (sortColumn === 'timestamp') {
@@ -74,7 +110,7 @@ export const BookmarkView = ({ allBookmarksAndHistory, onAddBookmark, onDeleteBo
             if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
             return 0;
         });
-    }, [allBookmarksAndHistory, sortColumn, sortDirection]);
+    }, [allBookmarksAndHistory, startDate, endDate, searchQuery, sortColumn, sortDirection]); // Add searchQuery to dependencies
 
     const handleSort = (column: string) => {
         if (sortColumn === column) {
@@ -94,6 +130,11 @@ export const BookmarkView = ({ allBookmarksAndHistory, onAddBookmark, onDeleteBo
         <div className="page-container">
             <h1>History and Bookmarks</h1>
             <div className="bookmark-view-content">
+                <div className="bookmark-filters">
+                    <label>From: <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} /></label>
+                    <label>To: <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} /></label>
+                    <label>Search: <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Title or URL" /></label>
+                </div>
                 <div className="source-legend">
                     {sourceLegend.map((entry, index) => (
                         <div key={index} className="legend-item">
@@ -102,7 +143,7 @@ export const BookmarkView = ({ allBookmarksAndHistory, onAddBookmark, onDeleteBo
                         </div>
                     ))}
                 </div>
-                 {sortedItems.length > 0 ? (
+                 {filteredAndSortedItems.length > 0 ? (
                     <table className="futuristic-table">
                         <thead>
                             <tr>
@@ -114,7 +155,7 @@ export const BookmarkView = ({ allBookmarksAndHistory, onAddBookmark, onDeleteBo
                             </tr>
                         </thead>
                         <tbody>
-                            {sortedItems.map(item => {
+                            {filteredAndSortedItems.map(item => {
                                 const itemDate = new Date(item.timestamp);
                                 const timeString = itemDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
                                 const dateString = itemDate.toLocaleDateString('en-US', { year: 'numeric', month: 'numeric', day: 'numeric' });

@@ -24,15 +24,36 @@ const DashboardStreamComponent = (
   { memos, bookmarks, history, onTagSelect, selectedDate, onUpdateMemo, onDeleteMemo, onOpenImageEditor, onTimestampClick }: Props,
   ref: React.Ref<HTMLDivElement>
 ) => {
-    
+    console.log('[DashboardStream] Component Render. Props:', { memos, bookmarks, history, selectedDate });
+
     const clusters = useMemo(() => {
-        const dayFilter = (d: string) => isSameDay(new Date(d), selectedDate);
+        console.log('[DashboardStream] clusters useMemo: raw memos length:', memos.length);
+        console.log('[DashboardStream] clusters useMemo: raw bookmarks length:', bookmarks.length);
+        console.log('[DashboardStream] clusters useMemo: raw history length:', history.length);
+        console.log('[DashboardStream] clusters useMemo: selectedDate:', selectedDate);
+
+        const dayFilter = (d: string) => {
+            const result = isSameDay(new Date(d), selectedDate);
+            // console.log(`[DashboardStream] dayFilter: Comparing ${d} with ${selectedDate.toISOString().split('T')[0]}. Result: ${result}`);
+            return result;
+        };
         
+        const filteredMemos = memos.filter(m => dayFilter(m.timestamp));
+        const filteredBookmarks = bookmarks.filter(b => dayFilter(b.timestamp));
+        const filteredHistory = history.filter(h => dayFilter(h.visit_time));
+
+        console.log('[DashboardStream] clusters useMemo: filteredMemos length:', filteredMemos.length);
+        console.log('[DashboardStream] clusters useMemo: filteredBookmarks length:', filteredBookmarks.length);
+        console.log('[DashboardStream] clusters useMemo: filteredHistory length:', filteredHistory.length);
+
+
         const allItems: StreamItem[] = [
-            ...memos.filter(m => dayFilter(m.timestamp)).map(m => ({ ...m, itemType: 'memo' as const })),
-            ...bookmarks.filter(b => dayFilter(b.timestamp)).map(b => ({ ...b, itemType: 'bookmark' as const })),
-            ...history.filter(h => dayFilter(h.visit_time)).map(h => ({ ...h, timestamp: h.visit_time, itemType: 'history' as const }))
+            ...filteredMemos.map(m => ({ ...m, itemType: 'memo' as const })),
+            ...filteredBookmarks.map(b => ({ ...b, itemType: 'bookmark' as const })),
+            ...filteredHistory.map(h => ({ ...h, timestamp: h.visit_time, itemType: 'history' as const }))
         ];
+        
+        console.log('[DashboardStream] clusters useMemo: allItems (after initial filtering and mapping) length:', allItems.length);
         
         // Ascending order
         allItems.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
@@ -47,6 +68,8 @@ const DashboardStreamComponent = (
             if(!groups[key]) groups[key] = [];
             groups[key].push(item);
         });
+
+        console.log('[DashboardStream] clusters useMemo: groups count (after grouping):', Object.keys(groups).length);
 
         return Object.entries(groups).map(([time, items]) => {
             const memosInCluster = items.filter(i => i.itemType === 'memo') as Memo[];

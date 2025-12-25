@@ -271,7 +271,16 @@ app.get('/api/tasks', (req, res) => {
 app.get('/api/notebooks', (req, res) => {
     appDb.all('SELECT * FROM notebooks', (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
-        const nbs = rows.map(r => ({...r, blocks: JSON.parse(r.blocks || '[]')}));
+        const nbs = rows.map(r => {
+            let parsedBlocks = [];
+            try {
+                parsedBlocks = JSON.parse(r.blocks || '[]');
+            } catch (parseError) {
+                console.error(`[API] Error parsing blocks for notebook ID ${r.id}:`, parseError.message);
+                // Optionally, log the malformed blocks content: console.error("Malformed blocks content:", r.blocks);
+            }
+            return {...r, blocks: parsedBlocks};
+        });
         res.json(nbs);
     });
 });
@@ -420,6 +429,52 @@ app.delete('/api/memos/:id', (req, res) => {
     appDb.run(`DELETE FROM memos WHERE id = ?`, req.params.id, function(err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ message: 'Deleted', changes: this.changes });
+    });
+});
+
+// --- Settings API ---
+const SETTINGS_FILE = path.join(__dirname, 'settings.json');
+
+// Helper to get default settings (should match frontend's initial state)
+const getDefaultSettings = () => ({
+    firefox: {},
+    chrome: {},
+    ai: {},
+    general: { importInterval: 30, darkMode: false, autoScroll: true },
+    generic: {}
+});
+
+// GET /api/settings
+app.get('/api/settings', (req, res) => {
+    fs.readFile(SETTINGS_FILE, 'utf8', (err, data) => {
+        if (err) {
+            if (err.code === 'ENOENT') {
+                // File not found, return default settings
+                console.log('[API] settings.json not found, returning default settings.');
+                return res.json(getDefaultSettings());
+            }
+            console.error('[API] Error reading settings file:', err);
+            return res.status(500).json({ error: 'Failed to read settings' });
+        }
+        try {
+            const settings = JSON.parse(data);
+            res.json(settings);
+        } catch (parseErr) {
+            console.error('[API] Error parsing settings JSON:', parseErr);
+            res.status(500).json({ error: 'Failed to parse settings' });
+        }
+    });
+});
+
+// PUT /api/settings
+app.put('/api/settings', (req, res) => {
+    const newSettings = req.body;
+    fs.writeFile(SETTINGS_FILE, JSON.stringify(newSettings, null, 2), 'utf8', (err) => {
+        if (err) {
+            console.error('[API] Error writing settings file:', err);
+            return res.status(500).json({ error: 'Failed to save settings' });
+        }
+        res.json({ message: 'Settings saved successfully.' });
     });
 });
 

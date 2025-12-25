@@ -16,7 +16,7 @@ import { ToolboxView } from './components/ToolboxView';
 import { NotebookView } from './components/NotebookView';
 import { BookmarkView } from './components/BookmarkView';
 import { AiNotesView } from './components/AiNotesView';
-import { SettingsModal } from './components/SettingsModal';
+import { SettingsView } from './components/SettingsView'; // Changed from SettingsModal
 import { SidebarCalendarWidget } from './components/SidebarCalendarWidget';
 import { EventModal } from './components/EventModal';
 import { MonthlyCalendar as FullCalendarPage } from './components/MonthlyCalendar';
@@ -44,7 +44,7 @@ const App = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [aiConversations, setAiConversations] = useState<AIConversationItem[]>([]); // New AI Conversations state
   const [editingMemo, setEditingMemo] = useState<Memo | null>(null);
-  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  // const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false); // REMOVED
   const [tasksLoaded, setTasksLoaded] = useState(false);
   const [newMemoTimestamp, setNewMemoTimestamp] = useState<string>(new Date().toISOString());
   const [continueTimestamp, setContinueTimestamp] = useState(false);
@@ -62,18 +62,50 @@ const App = () => {
       prevSelectedDateRef.current = selectedDate;
   }, [selectedDate]);
 
-  // --- Handlers for Settings ---
-  const handleImportIntervalChange = useCallback((interval: number) => { console.log(interval); }, []);
-  const handleBrowserPathsConfigChange = useCallback((config: any) => { console.log(config); }, []);
+  // New state for consolidated app settings
+  const [appSettings, setAppSettings] = useState<any>({
+    firefox: {},
+    chrome: {},
+    ai: {},
+    general: { importInterval: 30, darkMode: false, autoScroll: true },
+    generic: {}
+  });
+
+  // Consolidated handler for all settings changes
+  const onUpdateAppSettings = useCallback((newConfig: any) => {
+    setAppSettings(newConfig);
+    // TODO: Persist newConfig to DB
+  }, []);
+
+  // --- Handlers for Settings --- (REMOVED: handleImportIntervalChange, handleBrowserPathsConfigChange)
+  // const handleImportIntervalChange = useCallback((interval: number) => { console.log(interval); }, []);
+  // const handleBrowserPathsConfigChange = useCallback((config: any) => { console.log(config); }, []);
 
   // --- Load Data ---
   useEffect(() => {
       Promise.all([
-          db.getMemos(), db.getNotebooks(), db.getBookmarks(), db.getHistory(), db.getEvents(), db.getAIConversations()
-      ]).then(([m, n, b, h, e, a]) => {
-          setMemos(m); setNotebooks(n); setBookmarks(b); setHistory(h); setEvents(e); setAiConversations(a); 
+          db.getMemos(), db.getNotebooks(), db.getBookmarks(), db.getHistory(), db.getEvents(), db.getAIConversations(), db.getSettings() // Add db.getSettings()
+      ]).then(([m, n, b, h, e, a, s]) => { // Add s for settings
+          setMemos(m); 
+          console.log('[App] Memos loaded:', m); // Log memos
+          setNotebooks(n); 
+          // console.log('[Notebooks Effect] Raw notebooks data (n) from DB:', n); // Removed notebook log
+          // console.log('[Notebooks Effect] Notebooks loaded (after setNotebooks):', notebooks); // Removed notebook log
+          setBookmarks(b); 
+          console.log('[App] Bookmarks loaded:', b); // Log bookmarks
+          setHistory(h); 
+          console.log('[App] History loaded:', h); // Log history
+          setEvents(e); setAiConversations(a); setAppSettings(s || { // Initialize appSettings, with fallback
+            firefox: {}, chrome: {}, ai: {}, general: { importInterval: 30, darkMode: false, autoScroll: true }, generic: {}
+          });
       }).catch(console.error);
   }, []);
+
+  // Effect to save appSettings whenever they change
+  useEffect(() => {
+    console.log('[Settings Effect] Saving appSettings:', appSettings);
+    db.saveSettings(appSettings);
+  }, [appSettings]);
 
   // --- Comprehensive Auto-Scrolling Effect for Memo Stream ---
   useEffect(() => {
@@ -413,6 +445,11 @@ const App = () => {
           <KnowledgeGraphView />
         </main>
       );
+      case 'settings': return (
+        <main className="main-content">
+          <SettingsView config={appSettings} onConfigChange={onUpdateAppSettings} />
+        </main>
+      );
       default: return null;
     }
   };
@@ -429,14 +466,14 @@ const App = () => {
         initialEvent={editingEvent}
         selectedDate={selectedDateForModal}
       />
-      <SettingsModal 
+      {/* <SettingsModal 
         isOpen={isSettingsModalOpen} 
         onClose={() => setIsSettingsModalOpen(false)} 
         importInterval={30} 
         onImportIntervalChange={handleImportIntervalChange} 
         browserPathsConfig={{}} 
         onBrowserPathsConfigChange={handleBrowserPathsConfigChange} 
-      />
+      /> */ /* REMOVED */}
     </>
   );
 };

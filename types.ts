@@ -115,7 +115,7 @@ export type RightSideContentItem = Bookmark | BrowserHistoryEntry; // Renamed fo
 
 export type InterleavedRightSideItem = RightSideContentItem | InterleavedTimestampMarker;
 
-export type MainView = 'dashboard' | 'gallery' | 'notebooks' | 'bookmarks' | 'ai-notes' | 'toolbox' | 'full-calendar' | 'knowledge-graph';
+export type MainView = 'dashboard' | 'gallery' | 'notebooks' | 'bookmarks' | 'ai-notes' | 'toolbox' | 'full-calendar' | 'knowledge-graph' | 'settings'; // Added 'settings'
 
 export interface AIConversationItem {
   id: number;
@@ -125,4 +125,31 @@ export interface AIConversationItem {
   model?: string; // Which AI model was used
 }
 
-
+// New interface for SettingsView configuration
+export interface SettingsConfig {
+  firefox?: {
+    winProfileDir?: string;
+    winPlaces?: string;
+    winFavicons?: string;
+    wslProfileDir?: string;
+    wslPlaces?: string;
+    wslFavicons?: string;
+  };
+  chrome?: {
+    winUserData?: string;
+    wslUserData?: string;
+    profiles?: string; // comma separated
+  };
+  ai?: {
+    ollamaUrl?: string;
+    ollamaModel?: string;
+  };
+  general?: {
+    importInterval?: number;
+    darkMode?: boolean;
+    autoScroll?: boolean;
+  };
+  generic?: {
+    [key: string]: string | boolean; // For generic inputs/switches (input1, switch1, etc.)
+  };
+}

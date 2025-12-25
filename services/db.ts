@@ -105,31 +105,33 @@ export const getHistory = async (): Promise<BrowserHistoryEntry[]> => {
     }
 };
 
-// --- Notebooks (API or LocalStorage fallback) ---
-const KEY_PREFIX = 'memoria-stream-';
-function getData<T>(key: string, defaultValue: T): T {
-    try {
-        const stored = localStorage.getItem(KEY_PREFIX + key);
-        return stored ? JSON.parse(stored) : defaultValue;
-    } catch { return defaultValue; }
-}
-function saveData<T>(key: string, data: T) {
-    localStorage.setItem(KEY_PREFIX + key, JSON.stringify(data));
-}
-
+// --- Notebooks (API) ---
 export const getNotebooks = async (): Promise<Notebook[]> => {
+    console.log("[db.ts] getNotebooks: Fetching notebooks from API...");
     try {
-        const res = await fetch(`${API_URL}/api/notebooks`);
-        if(res.ok) return await res.json();
-    } catch {}
-    return getData<Notebook[]>('notebooks', []);
+        const url = `${API_URL}/api/notebooks`;
+        console.log(`[db.ts] getNotebooks: API URL: ${url}`);
+        const res = await fetch(url);
+        console.log(`[db.ts] getNotebooks: API response status: ${res.status}, ok: ${res.ok}`);
+        if (!res.ok) {
+            const errorText = await res.text();
+            console.error(`[db.ts] getNotebooks: API response not OK. Status: ${res.status}, Body: ${errorText}`);
+            throw new Error(`HTTP error! status: ${res.status}, body: ${errorText}`);
+        }
+        const notebooks = await res.json();
+        console.log("[db.ts] getNotebooks: Successfully fetched notebooks:", notebooks);
+        return notebooks;
+    } catch (error) {
+        console.error("[db.ts] getNotebooks: Failed to fetch notebooks:", error);
+        return []; // Return empty array on error, as per existing pattern for get functions
+    }
 };
 
 export const saveNotebooks = async (notebooks: Notebook[]): Promise<void> => {
     console.log("[db.ts] saveNotebooks called. Notebooks data:", notebooks);
     try {
         const response = await fetch(`${API_URL}/api/notebooks`, {
-            method: 'PUT', // or POST, depending on backend's idempotency. PUT implies updating the collection.
+            method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(notebooks)
         });
@@ -140,8 +142,8 @@ export const saveNotebooks = async (notebooks: Notebook[]): Promise<void> => {
         }
         console.log("[db.ts] Notebooks successfully saved to API.");
     } catch (error) {
-        console.error("[db.ts] Failed to save notebooks to API, saving to localStorage:", error);
-        saveData('notebooks', notebooks);
+        console.error("[db.ts] Failed to save notebooks to API:", error); // Log but rethrow or handle in UI
+        throw error; // Re-throw to be handled by the caller
     }
 };
 
@@ -149,12 +151,12 @@ export const saveNotebooks = async (notebooks: Notebook[]): Promise<void> => {
 export const getTasks = async (date: string): Promise<Task[]> => {
     try {
         const res = await fetch(`${API_URL}/api/tasks?date=${date}`);
-        if(res.ok) return await res.json();
+        if(!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        return await res.json();
     } catch (error) {
         console.error("Failed to fetch tasks:", error);
+        return []; // Return empty array on error
     }
-    // Fallback to localStorage if API fails
-    return getData<Task[]>(`tasks-${date}`, []);
 };
 
 export const saveTasks = async (date: string, tasks: Task[]): Promise<void> => {
@@ -166,12 +168,14 @@ export const saveTasks = async (date: string, tasks: Task[]): Promise<void> => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ date, tasks })
         });
-        if (!response.ok) throw new Error('Failed to save tasks');
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Failed to save tasks: ${errorText}`);
+        }
         console.log(`[db.ts] Tasks successfully saved for date: ${date}.`);
     } catch (error) {
-        console.error(`[db.ts] Failed to save tasks to API for date: ${date}, saving to localStorage:`, error);
-        // Fallback to localStorage
-        saveData(`tasks-${date}`, tasks);
+        console.error(`[db.ts] Failed to save tasks to API for date: ${date}:`, error);
+        throw error; // Re-throw to be handled by the caller
     }
 };
 
@@ -273,5 +277,46 @@ export const createAIConversation = async (conversation: Omit<AIConversationItem
     } catch (error) {
         console.error("Failed to create AI conversation:", error);
         throw error; // Re-throw to be handled by the caller
+    }
+};
+
+// --- Settings (API) ---
+import type { SettingsConfig } from '../types'; // Assuming SettingsConfig is defined here or imported
+
+export const getSettings = async (): Promise<SettingsConfig | null> => {
+    try {
+        console.log("[db.ts] Fetching settings from API...");
+        const response = await fetch(`${API_URL}/api/settings`);
+        if (!response.ok) {
+            if (response.status === 404) { // No settings found, return null to use defaults
+                console.log("[db.ts] No settings found on server (404).");
+                return null;
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const settings = await response.json();
+        console.log("[db.ts] Fetched settings:", settings);
+        return settings;
+    } catch (error) {
+        console.error("[db.ts] Failed to fetch settings:", error);
+        return null; // Return null on error to use defaults in frontend
+    }
+};
+
+export const saveSettings = async (settings: SettingsConfig): Promise<void> => {
+    try {
+        console.log("[db.ts] Saving settings to API:", settings);
+        const response = await fetch(`${API_URL}/api/settings`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(settings)
+        });
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Failed to save settings: ${errorText}`);
+        }
+        console.log("[db.ts] Settings successfully saved to API.");
+    } catch (error) {
+        console.error("[db.ts] Failed to save settings:", error);
     }
 };
