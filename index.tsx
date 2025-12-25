@@ -1,3 +1,5 @@
+import './style.css'; // This must be the very first import
+
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
 import type { MainView, Memo, Bookmark, Notebook, Task, EisenhowerQuadrant, BrowserHistoryEntry, LinkPreviewData } from './types';
@@ -26,6 +28,7 @@ import QuickScrollButtons from './components/QuickScrollButtons'; // New
 import MainStreamToggle from './components/MainStreamToggle'; // New toggle for main stream
 import { AIConversationStream } from './components/AIConversationStream'; // New AI Stream Component
 import { AIInput } from './components/AIInput'; // New AI Input Component
+import { IdentityOverview } from './components/IdentityOverview'; // New IdentityOverview Component
 import type { AIConversationItem } from './types'; // Import AI Conversation Item Type
 
 const App = () => {
@@ -346,11 +349,6 @@ const App = () => {
   const handleTagSelect = useCallback((t: string) => setActiveTag(t), []);
   const handleDateSelect = useCallback((d: Date) => setSelectedDate(d), []);
 
-  const filteredMemos = useMemo(() => {
-    if (activeTag) return memos.filter(m => m.tags.includes(activeTag));
-    return memos.filter(m => isSameDay(new Date(m.timestamp), selectedDate));
-  }, [memos, selectedDate, activeTag]);
-
   const allBookmarksAndHistory = useMemo(() => {
     return [...bookmarks, ...history];
   }, [bookmarks, history]);
@@ -395,7 +393,7 @@ const App = () => {
                       {activeTag && <div className="filter-status"><span>Filtering by: <strong>#{activeTag}</strong></span><button className="clear-filter-button" onClick={() => setActiveTag(null)}>Clear</button></div>}
                       <DashboardStream 
                         ref={dashboardStreamRef}
-                        memos={filteredMemos} bookmarks={bookmarks} history={history} 
+                        memos={memos} bookmarks={bookmarks} history={history} 
                         onTagSelect={handleTagSelect} selectedDate={selectedDate} 
                         onUpdateMemo={updateMemo} onDeleteMemo={deleteMemo} onOpenImageEditor={handleOpenImageEditor}
                         onTimestampClick={(time) => { setNewMemoTimestamp(time); setContinueTimestamp(true); }}
@@ -448,6 +446,11 @@ const App = () => {
       case 'settings': return (
         <main className="main-content">
           <SettingsView config={appSettings} onConfigChange={onUpdateAppSettings} />
+        </main>
+      );
+      case 'identity-overview': return (
+        <main className="main-content">
+          <IdentityOverview />
         </main>
       );
       default: return null;

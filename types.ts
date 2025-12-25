@@ -115,7 +115,7 @@ export type RightSideContentItem = Bookmark | BrowserHistoryEntry; // Renamed fo
 
 export type InterleavedRightSideItem = RightSideContentItem | InterleavedTimestampMarker;
 
-export type MainView = 'dashboard' | 'gallery' | 'notebooks' | 'bookmarks' | 'ai-notes' | 'toolbox' | 'full-calendar' | 'knowledge-graph' | 'settings'; // Added 'settings'
+export type MainView = 'dashboard' | 'gallery' | 'notebooks' | 'bookmarks' | 'ai-notes' | 'toolbox' | 'full-calendar' | 'knowledge-graph' | 'settings' | 'identity-overview'; // Added 'identity-overview'
 
 export interface AIConversationItem {
   id: number;
@@ -153,3 +153,64 @@ export interface SettingsConfig {
     [key: string]: string | boolean; // For generic inputs/switches (input1, switch1, etc.)
   };
 }
+
+// --- Interfaces from @extDev/types.ts ---
+export interface Experience {
+  id: string;
+  title: string;
+  company: string;
+  logoUrl?: string;
+  startDate: string;
+  endDate: string; // or 'Present'
+  location: string;
+  description: string;
+}
+
+export interface Education {
+  id: string;
+  school: string;
+  logoUrl?: string;
+  degree: string;
+  fieldOfStudy: string;
+  startDate: string;
+  endDate: string;
+}
+
+export interface CredentialPair {
+  id: string;
+  key: string;
+  value: string;
+  isSecret?: boolean;
+}
+
+export interface Identity {
+  id: string;
+  firstName: string;
+  lastName: string;
+  username: string;
+  headline: string;
+  email: string;
+  phone: string;
+  location: string;
+  about: string;
+  avatarUrl: string;
+  bannerUrl: string;
+  experience: Experience[];
+  education: Education[];
+  skills: string[];
+  personalCredentials: CredentialPair[]; // Personal keys/ids
+  connections: number;
+}
+
+export interface SharedCredentialGroup {
+  id: string;
+  name: string;
+  description: string;
+  pairs: CredentialPair[];
+  updatedAt: string;
+}
+
+export type ViewState = 
+  | { type: 'overview' }
+  | { type: 'identity-detail'; id: string }
+  | { type: 'creds-detail'; id: string };

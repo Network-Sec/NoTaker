@@ -1,3 +1,12 @@
+
+/* --- VARIABLE POLYFILLS (Fix for Tailwind v4/Local Build Mismatch) --- */
+:root {
+  --spacing: 0.25rem; /* Standard Tailwind spacing unit */
+  --tracking-wider: 0.05em;
+  --font-weight-bold: 700;
+}
+
+
 /* === ROOT VARIABLES & GLOBAL STYLES === */
 :root {
   --bg-color: #1a1a1a;
@@ -23,8 +32,6 @@
 
 * {
   box-sizing: border-box;
-  margin: 0;
-  padding: 0;
 }
 
 html, body, #root {
