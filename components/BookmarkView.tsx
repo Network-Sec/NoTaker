@@ -1,184 +1,186 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import type { Bookmark, BrowserHistoryEntry } from '../types';
-import { isSameDay } from '../utils'; // Import isSameDay utility
-import '../styles/bookmark_view.css';
 
-// --- SVG Icons for Legend and Table --- 
+// --- SVG Icons for Legend and List --- 
 const BookmarkIcon = ({ color = 'currentColor', size = '1em' }) => (<svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>);
 const ClockIcon = ({ color = 'currentColor', size = '1em' }) => (<svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>);
-const SquareIcon = ({ color = 'currentColor', size = '1em' }) => (<svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill={color} stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>);
-const TriangleIcon = ({ color = 'currentColor', size = '1em' }) => (<svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill={color} stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.86 18.14a2 2 0 0 0 1.73 3H20.41a2 2 0 0 0 1.73-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path></svg>);
-const HexagonIcon = ({ color = 'currentColor', size = '1em' }) => (<svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill={color} stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.1 12.5v6.3a2.3 2.3 0 0 1-1.15 2l-6.3 3.65a2.3 2.3 0 0 1-2.3 0l-6.3-3.65a2.3 2.3 0 0 1-1.15-2V12.5m18.9-3.65a2.3 2.3 0 0 0-1.15-2l-6.3-3.65a2.3 2.3 0 0 0-2.3 0l-6.3 3.65a2.3 2 0 0 0-1.15 2V12.5"></path></svg>);
+const GlobeIcon = ({ color = 'currentColor', size = '1em' }) => (<svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>);
+const SearchIcon = ({ color = 'currentColor', size = '1em' }) => (<svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>);
 
-const SOURCE_COLORS = ['#3b82f6', '#f97316', '#ef4444', '#8b5cf6', '#10b981', '#f59e0b']; // Blue, Orange, Red, Purple, Green, Yellow
-const SOURCE_SHAPES = [SquareIcon, TriangleIcon, HexagonIcon];
+// Styles for the "Identity-like" cards
+const CARD_BG_COLOR = 'rgba(22, 27, 34, 0.4)';
+const CARD_BORDER_HOVER = '#d68c45'; // Orange from identity theme
+const CARD_BORDER_ACTIVE = '#4deeea'; // Cyan from identity theme
+
+// HELPER: Safely get the date from either item type
+function getItemDate(item: Bookmark | BrowserHistoryEntry): Date {
+    const isBookmark = 'timestamp' in item;
+    const timeStr = isBookmark ? (item as Bookmark).timestamp : (item as BrowserHistoryEntry).visit_time;
+    if (!timeStr) return new Date(0); 
+    return new Date(timeStr);
+}
+
+// HELPER: Safely get the source string
+function getItemSource(item: Bookmark | BrowserHistoryEntry): string {
+    if (item.source) return item.source;
+    return ('timestamp' in item) ? 'Manual Bookmark' : 'Unknown History';
+}
 
 interface BookmarkViewProps {
     allBookmarksAndHistory: Array<Bookmark | BrowserHistoryEntry>;
-    onAddBookmark: (url: string, title: string) => void; // Keep prop for now, though form is removed
+    onAddBookmark: (url: string, title: string) => void;
     onDeleteBookmark: (id: string) => void;
 }
 
 export const BookmarkView = ({ allBookmarksAndHistory, onAddBookmark, onDeleteBookmark }: BookmarkViewProps) => {
     const [sortColumn, setSortColumn] = useState('timestamp');
     const [sortDirection, setSortDirection] = useState('desc');
-    const [startDate, setStartDate] = useState<string>(''); // For date input type
-    const [endDate, setEndDate] = useState<string>(''); // For date input type
-    const [searchQuery, setSearchQuery] = useState<string>(''); // New: For search input
-
-    const sourceLegend = useMemo(() => {
-        const uniqueSources = Array.from(new Set(allBookmarksAndHistory.map(item => item.source || item.itemType))).filter(s => s);
-        
-        const legendMap = new Map();
-        uniqueSources.forEach((source, index) => {
-            legendMap.set(source, {
-                color: SOURCE_COLORS[index % SOURCE_COLORS.length],
-                Shape: SOURCE_SHAPES[index % SOURCE_SHAPES.length]
-            });
-        });
-        return Array.from(legendMap.entries()).map(([name, { color, Shape }]) => ({
-            name,
-            color,
-            Shape
-        }));
-    }, [allBookmarksAndHistory]);
-
-    const getSourceVisual = useCallback((item: Bookmark | BrowserHistoryEntry) => {
-        const sourceName = item.source || item.itemType;
-        const legendEntry = sourceLegend.find(entry => entry.name === sourceName);
-        if (legendEntry) {
-            const { color, Shape } = legendEntry;
-            return <Shape color={color} size="1.2em" />;
-        }
-        return null;
-    }, [sourceLegend]); 
+    const [startDate, setStartDate] = useState<string>(''); 
+    const [endDate, setEndDate] = useState<string>(''); 
+    const [searchQuery, setSearchQuery] = useState<string>(''); 
 
     const filteredAndSortedItems = useMemo(() => {
         let currentFilteredItems = allBookmarksAndHistory;
 
-        // Apply date filtering
         if (startDate) {
             const start = new Date(startDate);
-            start.setHours(0, 0, 0, 0); // Start of the day
+            start.setHours(0, 0, 0, 0); 
             currentFilteredItems = currentFilteredItems.filter(item => {
-                const itemDate = new Date(item.timestamp);
+                const itemDate = getItemDate(item);
                 itemDate.setHours(0, 0, 0, 0);
                 return itemDate.getTime() >= start.getTime();
             });
         }
         if (endDate) {
             const end = new Date(endDate);
-            end.setHours(23, 59, 59, 999); // End of the day
+            end.setHours(23, 59, 59, 999); 
             currentFilteredItems = currentFilteredItems.filter(item => {
-                const itemDate = new Date(item.timestamp);
-                itemDate.setHours(0, 0, 0, 0); // Compare just dates
+                const itemDate = getItemDate(item);
+                itemDate.setHours(0, 0, 0, 0); 
                 return itemDate.getTime() <= end.getTime();
             });
         }
 
-        // Apply search filtering
         if (searchQuery) {
             const lowerCaseQuery = searchQuery.toLowerCase();
             currentFilteredItems = currentFilteredItems.filter(item => 
-                item.title.toLowerCase().includes(lowerCaseQuery) ||
-                item.url.toLowerCase().includes(lowerCaseQuery)
+                (item.title || '').toLowerCase().includes(lowerCaseQuery) ||
+                (item.url || '').toLowerCase().includes(lowerCaseQuery)
             );
         }
 
-        // Apply sorting
         return [...currentFilteredItems].sort((a, b) => {
             let aVal: any, bVal: any;
 
             if (sortColumn === 'timestamp') {
-                aVal = new Date(a.timestamp).getTime();
-                bVal = new Date(b.timestamp).getTime();
-            } else if (sortColumn === 'url') {
-                aVal = a.url;
-                bVal = b.url;
+                aVal = getItemDate(a).getTime();
+                bVal = getItemDate(b).getTime();
             } else if (sortColumn === 'title') {
-                aVal = a.title;
-                bVal = b.title;
-            } else if (sortColumn === 'source') {
-                aVal = (a.source || a.itemType);
-                bVal = (b.source || b.itemType);
-            } else if (sortColumn === 'itemType') {
-                aVal = a.itemType;
-                bVal = b.itemType;
-            }
+                aVal = (a.title || '').toLowerCase();
+                bVal = (b.title || '').toLowerCase();
+            } 
+            // Add more sort cases if UI header is added back, 
+            // but for "List/Card" view, sorting is often implicit or via dropdown.
+            // Keeping timestamp default.
 
             if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
             if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
             return 0;
         });
-    }, [allBookmarksAndHistory, startDate, endDate, searchQuery, sortColumn, sortDirection]); // Add searchQuery to dependencies
-
-    const handleSort = (column: string) => {
-        if (sortColumn === column) {
-            setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-        } else {
-            setSortColumn(column);
-            setSortDirection('asc');
-        }
-    };
-
-    const getSortIndicator = (column: string) => {
-        if (sortColumn !== column) return null;
-        return sortDirection === 'asc' ? ' ▲' : ' ▼';
-    };
+    }, [allBookmarksAndHistory, startDate, endDate, searchQuery, sortColumn, sortDirection]); 
 
     return (
-        <div className="page-container">
-            <h1>History and Bookmarks</h1>
-            <div className="bookmark-view-content">
-                <div className="bookmark-filters">
-                    <label>From: <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} /></label>
-                    <label>To: <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} /></label>
-                    <label>Search: <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Title or URL" /></label>
-                </div>
-                <div className="source-legend">
-                    {sourceLegend.map((entry, index) => (
-                        <div key={index} className="legend-item">
-                            <entry.Shape color={entry.color} size="1.2em" />
-                            <span>{entry.name}</span>
+        <div className="page-container flex flex-col h-full bg-[#0a0a0a]">
+            {/* Header Area */}
+            <div className="flex-none pt-4 px-2 pb-6">
+                <h1 className="text-2xl font-bold text-gray-100 mb-4 border-b border-gray-800 pb-2">History and Bookmarks</h1>
+                
+                {/* Controls Bar */}
+                <div className="bg-[#111] p-4 rounded-lg border border-gray-800 flex flex-wrap gap-4 items-center mb-4 shadow-sm">
+                    <div className="flex items-center gap-2 bg-[#0f0f0f] px-3 py-1 rounded-md border border-gray-700">
+                        <span className="text-[10px] uppercase text-gray-500 font-bold tracking-widest">Date Range</span>
+                        <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="bg-transparent text-sm text-gray-300 focus:outline-none w-28" />
+                        <span className="text-gray-600 font-medium">-</span>
+                        <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="bg-transparent text-sm text-gray-300 focus:outline-none w-28" />
+                    </div>
+                    
+                    <div className="flex-grow"></div>
+                    
+                    <div className="flex items-center gap-2 w-full md:w-auto relative group">
+                        <div className="absolute left-3 text-gray-500 group-focus-within:text-blue-400 transition-colors">
+                            <SearchIcon size="1em"/>
                         </div>
-                    ))}
+                        <input 
+                            type="text" 
+                            value={searchQuery} 
+                            onChange={e => setSearchQuery(e.target.value)} 
+                            placeholder="Search history..." 
+                            className="bg-[#0f0f0f] border border-gray-700 rounded-full pl-9 pr-4 py-1.5 text-sm text-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none w-full md:w-72 transition-all placeholder-gray-600" 
+                        />
+                    </div>
                 </div>
+            </div>
+
+            {/* List Area - Replaced Table with Tech-Item List */}
+            <div className="flex-grow overflow-y-auto custom-scrollbar px-2 pb-10 space-y-1">
                  {filteredAndSortedItems.length > 0 ? (
-                    <table className="futuristic-table">
-                        <thead>
-                            <tr>
-                                <th onClick={() => handleSort('title')}>Title{getSortIndicator('title')}</th>
-                                <th onClick={() => handleSort('url')}>URL{getSortIndicator('url')}</th>
-                                <th onClick={() => handleSort('timestamp')}>Timestamp{getSortIndicator('timestamp')}</th>
-                                <th onClick={() => handleSort('source')}>Source{getSortIndicator('source')}</th>
-                                <th onClick={() => handleSort('itemType')}>Type{getSortIndicator('itemType')}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredAndSortedItems.map(item => {
-                                const itemDate = new Date(item.timestamp);
-                                const timeString = itemDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-                                const dateString = itemDate.toLocaleDateString('en-US', { year: 'numeric', month: 'numeric', day: 'numeric' });
-                                return (
-                                    <tr key={item.id}>
-                                        <td className="bookmark-title-cell">{item.title}</td>
-                                        <td className="bookmark-url-cell"><a href={item.url} target="_blank" rel="noopener noreferrer">{item.url}</a></td>
-                                        <td className="timestamp-cell">
-                                            <div>{timeString}</div>
-                                            <div className="date-line">{dateString}</div>
-                                        </td>
-                                        <td className="bookmark-source-cell">
-                                            {getSourceVisual(item)}
-                                        </td>
-                                        <td className="bookmark-type-cell">
-                                            {item.itemType === 'bookmark' ? <BookmarkIcon size="1.2em" /> : <ClockIcon size="1.2em" />}
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
-                 ): <div className="no-items-placeholder"><h2>No History or Bookmarks</h2><p>Your history and bookmarks will appear here.</p></div>}
+                    filteredAndSortedItems.map(item => {
+                        const itemDate = getItemDate(item);
+                        const isValid = !isNaN(itemDate.getTime());
+                        
+                        // Formatting
+                        const timeString = isValid ? itemDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--:--';
+                        const dateString = isValid ? itemDate.toLocaleDateString([], { month: 'short', day: 'numeric' }) : '';
+                        const isBookmark = 'timestamp' in item;
+                        
+                        return (
+                            <div 
+                                key={item.id} 
+                                className="group relative flex items-center w-full p-3 mb-1 bg-[#161b22]/40 border border-transparent border-l-0 text-sm text-gray-400 transition-all hover:bg-[#1c2128] hover:text-gray-200 cursor-pointer overflow-hidden"
+                            >
+                                {/* Left Accent Bar (Identity Style) */}
+                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#30363d] transition-all group-hover:w-1.5 group-hover:bg-blue-500"></div>
+
+                                {/* Icon / Favicon Placeholder */}
+                                <div className="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-[#0d1117] rounded-lg border border-[#30363d] group-hover:border-blue-500/30 text-gray-500 group-hover:text-blue-400 mr-4 transition-colors">
+                                    {isBookmark ? <BookmarkIcon size="1.2em" /> : <GlobeIcon size="1.2em" />}
+                                </div>
+
+                                {/* Main Content */}
+                                <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-sm font-semibold truncate text-gray-300 group-hover:text-white pr-4">
+                                            {item.title || '(No Title)'}
+                                        </h3>
+                                        <span className="text-[10px] font-mono text-gray-600 group-hover:text-blue-400/80 whitespace-nowrap">
+                                            {dateString} <span className="opacity-50">|</span> {timeString}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center justify-between mt-0.5">
+                                        <a 
+                                            href={item.url} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer" 
+                                            className="text-xs text-gray-500 truncate hover:text-blue-400 transition-colors max-w-[80%]"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            {item.url}
+                                        </a>
+                                        <span className="text-[9px] uppercase tracking-wider text-gray-700 bg-[#0d1117] px-1.5 py-0.5 rounded border border-[#30363d] group-hover:border-gray-600">
+                                            {getItemSource(item).replace('Chrome-', '').replace('Firefox-', '')}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })
+                 ) : (
+                    <div className="flex flex-col items-center justify-center h-full text-gray-500 opacity-50 py-12">
+                        <ClockIcon size="3em" />
+                        <h2 className="mt-4 text-xl font-light">No items found</h2>
+                        <p className="text-sm">Try adjusting your filters</p>
+                    </div>
+                 )}
             </div>
         </div>
     );

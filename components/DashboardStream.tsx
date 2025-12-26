@@ -125,7 +125,7 @@ const DashboardStreamComponent = (
     if (clusters.length === 0) return <div className="empty-stream">No activity on this day.</div>;
 
     return (
-        <div className="dashboard-stream" ref={ref}>
+        <div className="dashboard-stream custom-scrollbar" ref={ref}>
             {clusters.map((cluster) => (
                 <UnifiedStreamItem
                     key={cluster.time}

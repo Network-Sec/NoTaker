@@ -1,18 +1,33 @@
-import React, { useState } from 'react';
-import '../styles/settings.css';
-import type { SettingsConfig } from '../types'; // Import SettingsConfig from central types file
+import React, { useState, useEffect } from 'react';
+import { SettingsConfig } from '../types';
+import { getSettings, saveSettings } from '../services/db';
 
-interface SettingsViewProps {
-  config: SettingsConfig;
-  onConfigChange: (newConfig: SettingsConfig) => void;
-}
+const SettingsView: React.FC = () => {
+    const [config, setConfig] = useState<SettingsConfig>({
+        firefox: {},
+        chrome: {},
+        ai: {},
+        general: { importInterval: 30 },
+        generic: {}
+    });
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
 
-export const SettingsView: React.FC<SettingsViewProps> = ({ config, onConfigChange }) => {
-    // Local state management for all fields
-    const [localConfig, setLocalConfig] = useState(config);
+    useEffect(() => {
+        getSettings().then(data => {
+            if (data) setConfig(data);
+            setLoading(false);
+        });
+    }, []);
 
-    const handleChange = (section: string, key: string, value: any) => {
-        setLocalConfig((prev: any) => ({
+    const handleSave = async () => {
+        setSaving(true);
+        await saveSettings(config);
+        setSaving(false);
+    };
+
+    const handleChange = (section: keyof SettingsConfig, key: string, value: any) => {
+        setConfig(prev => ({
             ...prev,
             [section]: {
                 ...prev[section],
@@ -21,138 +36,128 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ config, onConfigChan
         }));
     };
 
-    const handleRootChange = (key: string, value: any) => {
-        setLocalConfig((prev: any) => ({ ...prev, [key]: value }));
-    };
-
-    const saveSettings = () => {
-        onConfigChange(localConfig);
-        alert('Settings Saved');
-    };
+    if (loading) return <div className="p-8 text-gray-400">Loading settings...</div>;
 
     return (
-        <div className="page-container settings-view">
-            <div className="settings-header">
-                <h1>Settings</h1>
-                <button className="primary-button" onClick={saveSettings}>Save Changes</button>
+        <div className="flex flex-col h-full bg-[#0a0a0a] text-gray-200 overflow-y-auto custom-scrollbar">
+            {/* Header */}
+            <div className="flex items-center justify-between px-8 py-6 border-b border-gray-800 bg-[#0f0f0f]">
+                <div>
+                    <h1 className="text-2xl font-bold tracking-tight text-white">System Configuration</h1>
+                    <p className="text-sm text-gray-500 mt-1">Manage global preferences and integrations</p>
+                </div>
+                <button 
+                    onClick={handleSave}
+                    disabled={saving}
+                    className={`px-6 py-2 rounded-md font-medium text-sm transition-all ${
+                        saving 
+                        ? 'bg-blue-900/30 text-blue-400 cursor-not-allowed' 
+                        : 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-900/20'
+                    }`}
+                >
+                    {saving ? 'Saving...' : 'Save Changes'}
+                </button>
             </div>
 
-            {/* --- FIREFOX --- */}
-            <div className="settings-section">
-                <h2>Firefox Configuration</h2>
+            <div className="p-8 space-y-8 max-w-5xl mx-auto w-full">
                 
-                <div className="setting-item">
-                    <label>Windows Profile Directory</label>
-                    <input type="text" value={localConfig.firefox?.winProfileDir || ''} onChange={e => handleChange('firefox', 'winProfileDir', e.target.value)} placeholder="%APPDATA%\Mozilla\Firefox\Profiles\" />
-                </div>
-
-                <div className="setting-grid-two-col">
-                    <div className="setting-item">
-                        <label>Windows Places SQLite</label>
-                        <input type="text" value={localConfig.firefox?.winPlaces || 'places.sqlite'} onChange={e => handleChange('firefox', 'winPlaces', e.target.value)} />
+                {/* General Settings */}
+                <section className="bg-[#111] border border-gray-800 rounded-xl overflow-hidden">
+                    <div className="px-6 py-4 border-b border-gray-800 bg-[#161616]">
+                        <h2 className="text-lg font-semibold text-gray-100">General</h2>
                     </div>
-                    <div className="setting-item">
-                        <label>Windows Favicons SQLite</label>
-                        <input type="text" value={localConfig.firefox?.winFavicons || 'favicons.sqlite'} onChange={e => handleChange('firefox', 'winFavicons', e.target.value)} />
+                    <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
+                                Browser Import Interval (Minutes)
+                            </label>
+                            <input 
+                                type="number" 
+                                value={config.general?.importInterval || 30}
+                                onChange={(e) => handleChange('general', 'importInterval', parseInt(e.target.value))}
+                                className="w-full bg-[#0a0a0a] border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors text-white placeholder-gray-600"
+                            />
+                        </div>
                     </div>
-                </div>
+                </section>
 
-                <div className="setting-item">
-                    <label>WSL Profile Directory</label>
-                    <input type="text" value={localConfig.firefox?.wslProfileDir || ''} onChange={e => handleChange('firefox', 'wslProfileDir', e.target.value)} placeholder="~/.mozilla/firefox/" />
-                </div>
-
-                <div className="setting-grid-two-col">
-                    <div className="setting-item">
-                        <label>WSL Places SQLite</label>
-                        <input type="text" value={localConfig.firefox?.wslPlaces || 'places.sqlite'} onChange={e => handleChange('firefox', 'wslPlaces', e.target.value)} />
+                {/* Integrations */}
+                <section className="bg-[#111] border border-gray-800 rounded-xl overflow-hidden">
+                    <div className="px-6 py-4 border-b border-gray-800 bg-[#161616]">
+                        <h2 className="text-lg font-semibold text-gray-100">Browser Integrations</h2>
                     </div>
-                    <div className="setting-item">
-                        <label>WSL Favicons SQLite</label>
-                        <input type="text" value={localConfig.firefox?.wslFavicons || 'favicons.sqlite'} onChange={e => handleChange('firefox', 'wslFavicons', e.target.value)} />
-                    </div>
-                </div>
-            </div>
-
-            {/* --- CHROME --- */}
-            <div className="settings-section">
-                <h2>Chrome Configuration</h2>
-                
-                <div className="setting-item">
-                    <label>Windows User Data Directory</label>
-                    <input type="text" value={localConfig.chrome?.winUserData || ''} onChange={e => handleChange('chrome', 'winUserData', e.target.value)} placeholder="%LOCALAPPDATA%\Google\Chrome\User Data\" />
-                </div>
-
-                <div className="setting-item">
-                    <label>WSL User Data Directory</label>
-                    <input type="text" value={localConfig.chrome?.wslUserData || ''} onChange={e => handleChange('chrome', 'wslUserData', e.target.value)} placeholder="/mnt/c/Users/.../Chrome/User Data/" />
-                </div>
-
-                <div className="setting-item">
-                    <label>Profile Names (comma separated)</label>
-                    <input type="text" value={localConfig.chrome?.profiles || ''} onChange={e => handleChange('chrome', 'profiles', e.target.value)} placeholder="Default, Profile 1, Profile 2" />
-                </div>
-            </div>
-
-            {/* --- AI & GENERAL --- */}
-            <div className="settings-section">
-                <h2>AI & System</h2>
-                
-                <div className="setting-grid-two-col">
-                    <div className="setting-item">
-                        <label>Ollama URL</label>
-                        <input type="text" value={localConfig.ai?.ollamaUrl || ''} onChange={e => handleChange('ai', 'ollamaUrl', e.target.value)} placeholder="http://127.0.0.1:11434" />
-                    </div>
-                    <div className="setting-item">
-                        <label>Ollama Model</label>
-                        <input type="text" value={localConfig.ai?.ollamaModel || ''} onChange={e => handleChange('ai', 'ollamaModel', e.target.value)} placeholder="llama2" />
-                    </div>
-                </div>
-
-                <div className="setting-item">
-                    <label>Import Interval (Minutes)</label>
-                    <input type="number" value={localConfig.general?.importInterval || 30} onChange={e => handleChange('general', 'importInterval', Number(e.target.value))} />
-                </div>
-            </div>
-
-            {/* --- GENERIC INPUTS --- */}
-            <div className="settings-section">
-                <h2>Custom Parameters</h2>
-                {[1, 2, 3, 4, 5].map(i => (
-                    <div key={`input-${i}`} className="setting-item">
-                        <label>Generic Input {i}</label>
-                        <input 
-                            type="text" 
-                            value={localConfig.generic?.[`input${i}`] || ''} 
-                            onChange={e => handleChange('generic', `input${i}`, e.target.value)} 
-                        />
-                    </div>
-                ))}
-            </div>
-
-            {/* --- GENERIC SWITCHES --- */}
-            <div className="settings-section">
-                <h2>Feature Toggles</h2>
-                {[1, 2, 3, 4, 5].map(i => (
-                    <div key={`switch-${i}`} className="setting-item-row">
-                        <label className="toggle-switch-label">
-                            <span>Generic Toggle {i}</span>
-                            <div className="toggle-switch"> {/* Wrapper for input and slider */}
+                    <div className="p-6 space-y-6">
+                        <div className="p-4 rounded-lg bg-blue-900/10 border border-blue-900/30">
+                            <h3 className="text-blue-400 font-medium mb-2">Automated Import</h3>
+                            <p className="text-sm text-gray-400">
+                                Chrome, Brave, and Firefox profiles are automatically detected. 
+                                Ensure you have enabled the backup service to prevent data loss.
+                            </p>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
+                                    Chrome Profiles (CSV)
+                                </label>
                                 <input 
-                                    type="checkbox" 
-                                    checked={localConfig.generic?.[`switch${i}`] || false} 
-                                    onChange={e => handleChange('generic', `switch${i}`, e.target.checked)} 
+                                    type="text" 
+                                    placeholder="Default, Profile 1"
+                                    value={config.chrome?.profiles || ''}
+                                    onChange={(e) => handleChange('chrome', 'profiles', e.target.value)}
+                                    className="w-full bg-[#0a0a0a] border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 text-white"
                                 />
-                                <span className="slider round"></span>
                             </div>
-                        </label>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
+                                    Firefox Profiles (Path)
+                                </label>
+                                <input 
+                                    type="text" 
+                                    placeholder="Auto-detected"
+                                    disabled
+                                    className="w-full bg-[#0a0a0a] border border-gray-800 rounded-lg px-4 py-3 text-gray-500 cursor-not-allowed"
+                                />
+                            </div>
+                        </div>
                     </div>
-                ))}
-            </div>
+                </section>
 
-            <div className="settings-actions">
-                <button className="primary-button" onClick={saveSettings}>Save All Settings</button>
+                {/* AI Configuration */}
+                <section className="bg-[#111] border border-gray-800 rounded-xl overflow-hidden">
+                     <div className="px-6 py-4 border-b border-gray-800 bg-[#161616]">
+                        <h2 className="text-lg font-semibold text-gray-100">AI & LLM Settings</h2>
+                    </div>
+                    <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                         <div>
+                            <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
+                                Ollama API URL
+                            </label>
+                            <input 
+                                type="text" 
+                                placeholder="http://127.0.0.1:11434"
+                                value={config.ai?.ollamaUrl || ''}
+                                onChange={(e) => handleChange('ai', 'ollamaUrl', e.target.value)}
+                                className="w-full bg-[#0a0a0a] border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 text-white"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
+                                Default Model
+                            </label>
+                            <input 
+                                type="text" 
+                                placeholder="llama3"
+                                value={config.ai?.defaultModel || ''}
+                                onChange={(e) => handleChange('ai', 'defaultModel', e.target.value)}
+                                className="w-full bg-[#0a0a0a] border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 text-white"
+                            />
+                        </div>
+                    </div>
+                </section>
             </div>
         </div>
     );
 };
+
+export default SettingsView;

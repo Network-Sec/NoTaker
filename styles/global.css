@@ -1,3 +1,4 @@
+/* styles/global.css - Root Variables & Global Resets */
 
 /* --- VARIABLE POLYFILLS (Fix for Tailwind v4/Local Build Mismatch) --- */
 :root {
@@ -61,6 +62,46 @@ a {
 a:hover {
   text-decoration: underline;
 }
+
+/* === CUSTOM SCROLLBAR UTILITY (3D Bevel / Windows 3.11 Style) === */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 18px; /* Wider/Thicker */
+  height: 18px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background-color: #2c2c2c; /* Dark track */
+  border-left: 1px solid #1a1a1a;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #3a3a3a; /* Base gray */
+  /* The Bevel Effect */
+  border-top: 2px solid #555;   /* Light Top */
+  border-left: 2px solid #555;  /* Light Left */
+  border-right: 2px solid #111; /* Dark Right */
+  border-bottom: 2px solid #111;/* Dark Bottom */
+  box-shadow: inset 1px 1px 0px rgba(255,255,255,0.1); /* Subtle inner highlight */
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #444;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:active {
+  /* Pressed state - inverted bevel */
+  border-top: 2px solid #111;
+  border-left: 2px solid #111;
+  border-right: 2px solid #555;
+  border-bottom: 2px solid #555;
+  background-color: #333;
+}
+
+/* Corner piece (between horizontal and vertical scrollbars) */
+.custom-scrollbar::-webkit-scrollbar-corner {
+  background-color: #2c2c2c;
+}
+
 
 /* === MAIN LAYOUT === */
 .main-content-wrapper {

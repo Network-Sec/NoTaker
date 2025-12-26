@@ -12,6 +12,7 @@ const { getGraphData } = require('./graph_data');
 const { searchAll } = require('./search');
 const { Ollama } = require('ollama'); 
 const aiRoutes = require('./ai_api');
+const { startBackupService } = require('./backup_service');
 
 // --- ROUTE IMPORTS ---
 const notebookRoutes = require('./notebooks_api');
@@ -92,6 +93,9 @@ const appDb = new sqlite3.Database(appDbPath, (err) => {
             }
         });
     });
+
+    // --- START BACKUP SERVICE ---
+    startBackupService(appDb);
 });
 
 app.use(cors());

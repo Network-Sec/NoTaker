@@ -18,7 +18,7 @@ import { ToolboxView } from './components/ToolboxView';
 import { NotebookView } from './components/NotebookView';
 import { BookmarkView } from './components/BookmarkView';
 import { AiNotesView } from './components/AiNotesView';
-import { SettingsView } from './components/SettingsView'; // Changed from SettingsModal
+import SettingsView from './components/SettingsView'; // Changed from { SettingsView }
 import { SidebarCalendarWidget } from './components/SidebarCalendarWidget';
 import { EventModal } from './components/EventModal';
 import { MonthlyCalendar as FullCalendarPage } from './components/MonthlyCalendar';
