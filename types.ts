@@ -199,6 +199,7 @@ export interface Identity {
   education: Education[];
   skills: string[];
   personalCredentials: CredentialPair[]; // Personal keys/ids
+  linkedVaultIds?: string[]; // IDs of SharedCredentialGroups linked to this profile
   connections: number;
 }
 

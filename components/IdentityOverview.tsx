@@ -1,172 +1,63 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Users, LayoutGrid, Database, Search, Bell, Settings, ChevronRight, Plus, Hexagon } from 'lucide-react';
-import { Identity, SharedCredentialGroup, ViewState } from './types';
+import { Identity, SharedCredentialGroup, ViewState } from '../types';
 import { IdentityProfileCard } from './IdentityProfileCard';
 import { IdentityDetailView } from './IdentityDetailView';
 import { CredsDetailView } from './CredsDetailView';
+import { getIdentities, createIdentity, updateIdentity, deleteIdentity, getCredentialGroups, createCredentialGroup, updateCredentialGroup, deleteCredentialGroup } from '../services/db';
 
-// --- MOCK DATA ---
+// --- MOCK INITIAL DATA FOR FALLBACK ---
+// (Kept for instant visual feedback if backend fails, but logic uses API)
 const MOCK_IDENTITIES: Identity[] = [
   {
     id: '1',
-    firstName: 'Patrick',
-    lastName: 'Schäfer',
-    username: 'schaeferone',
-    headline: 'Senior Frontend Engineer | React | Tailwind',
-    email: 'p.schaefer@tech-corp.com',
+    firstName: 'Patricia',
+    lastName: 'Casper',
+    username: 'kasparrone',
+    headline: 'Senior Frontend Fritten Wender',
+    email: 'p.casper@tech-corp.com',
     phone: '+49 123 456 789',
-    location: 'Freiburg im Breisgau, Germany',
+    location: 'Germany',
     avatarUrl: 'https://picsum.photos/id/64/200/200',
     bannerUrl: 'https://picsum.photos/id/132/1200/400',
-    about: 'Passionate developer with 8+ years of experience in building scalable web applications. \n\nSpecialized in React, TypeScript, and modern CSS frameworks. I love creating polished user interfaces that provide exceptional user experiences.',
+    about: 'Passionate Freedom Fryer.',
     connections: 582,
-    experience: [
-      {
-        id: 'e1',
-        title: 'Senior Frontend Engineer',
-        company: 'Europa-Park',
-        startDate: 'Sep 2020',
-        endDate: 'Present',
-        location: 'Rust, Germany',
-        description: 'Leading the frontend team for the main ticketing platform. Migrated legacy jQuery codebase to Next.js.'
-      },
-      {
-        id: 'e2',
-        title: 'Software Developer',
-        company: 'Pyramid Computer GmbH',
-        startDate: 'Dec 2018',
-        endDate: 'Feb 2020',
-        location: 'Freiburg',
-        description: 'Developed kiosk touch interfaces for fast food chains using proprietary framework.'
-      }
-    ],
-    education: [
-      {
-        id: 'edu1',
-        school: 'Walter-Rathenau-Gewerbeschule',
-        degree: 'Computer Science Expert',
-        fieldOfStudy: 'System Integration',
-        startDate: '2015',
-        endDate: '2018'
-      }
-    ],
-    skills: ['React', 'TypeScript', 'Node.js', 'Tailwind CSS', 'Docker', 'GraphQL', 'PostgreSQL'],
-    personalCredentials: [
-        { id: 'pc1', key: 'VPN_USER', value: 'pschaefer_vpn', isSecret: false },
-        { id: 'pc2', key: 'SSH_KEY_FINGERPRINT', value: 'SHA256:f4:a1:...', isSecret: true }
-    ]
-  },
-  {
-    id: '2',
-    firstName: 'Sarah',
-    lastName: 'Connor',
-    username: 'skynet_hater',
-    headline: 'Cybersecurity Analyst at TechDefense',
-    email: 's.connor@defense.org',
-    phone: '+1 555 999 0000',
-    location: 'Los Angeles, USA',
-    avatarUrl: 'https://picsum.photos/id/65/200/200',
-    bannerUrl: 'https://picsum.photos/id/180/1200/400',
-    about: 'Expert in threat detection and mitigation. Focused on securing critical infrastructure.',
-    connections: 1200,
     experience: [],
     education: [],
-    skills: ['Penetration Testing', 'Network Security', 'Python'],
-    personalCredentials: []
-  },
-  {
-    id: '3',
-    firstName: 'John',
-    lastName: 'Doe',
-    username: 'jdoe_dev',
-    headline: 'Full Stack Developer',
-    email: 'john@example.com',
-    phone: '+1 222 333 4444',
-    location: 'New York, USA',
-    avatarUrl: 'https://picsum.photos/id/91/200/200',
-    bannerUrl: 'https://picsum.photos/id/20/1200/400',
-    about: 'Building things for the web.',
-    connections: 45,
-    experience: [],
-    education: [],
-    skills: ['Java', 'Spring Boot', 'Angular'],
-    personalCredentials: []
-  },
-  {
-    id: '4',
-    firstName: 'Alice',
-    lastName: 'Wonderland',
-    username: 'alice_w',
-    headline: 'UX Designer',
-    email: 'alice@design.io',
-    phone: '+44 7700 900077',
-    location: 'London, UK',
-    avatarUrl: 'https://picsum.photos/id/342/200/200',
-    bannerUrl: 'https://picsum.photos/id/119/1200/400',
-    about: 'Designing intuitive experiences.',
-    connections: 890,
-    experience: [],
-    education: [],
-    skills: ['Figma', 'Sketch', 'User Research'],
-    personalCredentials: []
-  },
-  {
-    id: '5',
-    firstName: 'Bob',
-    lastName: 'Builder',
-    username: 'can_we_fix_it',
-    headline: 'Civil Engineer',
-    email: 'bob@construction.com',
-    phone: '+1 555 123 4567',
-    location: 'Chicago, USA',
-    avatarUrl: 'https://picsum.photos/id/237/200/200',
-    bannerUrl: 'https://picsum.photos/id/13/1200/400',
-    about: 'Yes we can.',
-    connections: 120,
-    experience: [],
-    education: [],
-    skills: ['AutoCAD', 'Project Management'],
-    personalCredentials: []
-  }
-];
-
-const MOCK_CREDS_GROUPS: SharedCredentialGroup[] = [
-  {
-    id: 'cg1',
-    name: 'AWS Production',
-    description: 'Keys for the main production environment',
-    updatedAt: '2023-10-25T10:00:00Z',
-    pairs: [
-      { id: 'p1', key: 'AWS_ACCESS_KEY_ID', value: 'AKIAIOSFODNN7EXAMPLE', isSecret: false },
-      { id: 'p2', key: 'AWS_SECRET_ACCESS_KEY', value: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY', isSecret: true },
-      { id: 'p3', key: 'REGION', value: 'us-east-1', isSecret: false }
-    ]
-  },
-  {
-    id: 'cg2',
-    name: 'Stripe API Test',
-    description: 'Test credentials for payment gateway',
-    updatedAt: '2023-11-02T14:30:00Z',
-    pairs: [
-      { id: 'p4', key: 'STRIPE_PUBLIC', value: 'pk_test_12345', isSecret: false },
-      { id: 'p5', key: 'STRIPE_SECRET', value: 'sk_test_67890', isSecret: true }
-    ]
-  },
-  {
-    id: 'cg3',
-    name: 'Database (Dev)',
-    description: 'Local development database connection strings',
-    updatedAt: '2023-09-15T09:15:00Z',
-    pairs: []
+    skills: ['React', 'TypeScript'],
+    personalCredentials: [],
+    linkedVaultIds: []
   }
 ];
 
 export const IdentityOverview: React.FC = () => {
-  const [identities, setIdentities] = useState<Identity[]>(MOCK_IDENTITIES);
-  const [credsGroups, setCredsGroups] = useState<SharedCredentialGroup[]>(MOCK_CREDS_GROUPS);
+  const [identities, setIdentities] = useState<Identity[]>([]);
+  const [credsGroups, setCredsGroups] = useState<SharedCredentialGroup[]>([]);
   const [viewState, setViewState] = useState<ViewState>({ type: 'overview' });
+  const [isLoading, setIsLoading] = useState(true);
+
+  // --- FETCH DATA ---
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+      // Parallel fetch
+      const [ids, grps] = await Promise.all([getIdentities(), getCredentialGroups()]);
+      setIdentities(ids.length > 0 ? ids : MOCK_IDENTITIES); // Use mocks if empty (demo mode)
+      setCredsGroups(grps);
+    } catch (e) {
+      console.error("Fetch error", e);
+      setIdentities(MOCK_IDENTITIES); // Fallback
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   // -- Handlers --
+
   const handleIdentityClick = (id: string) => {
     setViewState({ type: 'identity-detail', id });
   };
@@ -179,33 +70,107 @@ export const IdentityOverview: React.FC = () => {
     setViewState({ type: 'overview' });
   };
 
-  const handleUpdateCreds = (updatedGroup: SharedCredentialGroup) => {
-    setCredsGroups(prev => prev.map(g => g.id === updatedGroup.id ? updatedGroup : g));
+  // --- Identity Actions ---
+
+  const handleCreateIdentity = async () => {
+    const newIdentity: Omit<Identity, 'id'> = {
+      firstName: 'NEW',
+      lastName: 'USER',
+      username: 'user_new',
+      headline: 'Role TBD',
+      email: '',
+      phone: '',
+      location: 'Unknown',
+      about: '',
+      avatarUrl: `https://ui-avatars.com/api/?name=NU&background=random`,
+      bannerUrl: 'https://picsum.photos/1200/400?grayscale',
+      experience: [],
+      education: [],
+      skills: [],
+      personalCredentials: [],
+      linkedVaultIds: [],
+      connections: 0
+    };
+    
+    try {
+      const id = await createIdentity(newIdentity);
+      const created = { ...newIdentity, id } as Identity;
+      setIdentities(prev => [...prev, created]);
+      setViewState({ type: 'identity-detail', id });
+    } catch (e) {
+      console.error("Create failed", e);
+    }
   };
 
-  const handleAddCredsGroup = () => {
-    const newGroup: SharedCredentialGroup = {
-      id: `new_${Date.now()}`,
-      name: 'New Credentials',
-      description: 'Description here...',
+  const handleSaveIdentity = async (updated: Identity) => {
+    try {
+      await updateIdentity(updated);
+      setIdentities(prev => prev.map(i => i.id === updated.id ? updated : i));
+    } catch (e) {
+      console.error("Update failed", e);
+    }
+  };
+
+  const handleDeleteIdentity = async (id: string) => {
+    try {
+      await deleteIdentity(id);
+      setIdentities(prev => prev.filter(i => i.id !== id));
+      setViewState({ type: 'overview' });
+    } catch (e) {
+      console.error("Delete failed", e);
+    }
+  };
+
+  // --- Creds Actions ---
+
+  const handleUpdateCreds = async (updatedGroup: SharedCredentialGroup) => {
+    try {
+      await updateCredentialGroup(updatedGroup);
+      setCredsGroups(prev => prev.map(g => g.id === updatedGroup.id ? updatedGroup : g));
+    } catch (e) {
+      console.error("Update creds failed", e);
+    }
+  };
+
+  const handleAddCredsGroup = async () => {
+    const newGroup: Omit<SharedCredentialGroup, 'id'> = {
+      name: 'NEW_VAULT',
+      description: 'Secure storage container',
       updatedAt: new Date().toISOString(),
       pairs: []
     };
-    setCredsGroups([...credsGroups, newGroup]);
-    setViewState({ type: 'creds-detail', id: newGroup.id });
+    try {
+      const id = await createCredentialGroup(newGroup);
+      const created = { ...newGroup, id } as SharedCredentialGroup;
+      setCredsGroups([...credsGroups, created]);
+      setViewState({ type: 'creds-detail', id });
+    } catch (e) {
+      console.error("Create creds failed", e);
+    }
   };
 
   // -- Derived State for Main Content --
   const renderMainContent = () => {
+    if (isLoading) {
+      return <div className="flex items-center justify-center h-full text-techCyan font-mono animate-pulse">INITIALIZING_SYSTEM...</div>;
+    }
+
     if (viewState.type === 'identity-detail') {
       const identity = identities.find(i => i.id === viewState.id);
-      if (!identity) return <div>Not Found</div>;
-      return <IdentityDetailView identity={identity} />;
+      if (!identity) return <div className="p-8 text-red-500">ERROR: IDENTITY_NOT_FOUND</div>;
+      return (
+        <IdentityDetailView 
+          identity={identity} 
+          availableVaults={credsGroups}
+          onSave={handleSaveIdentity}
+          onDelete={handleDeleteIdentity}
+        />
+      );
     }
 
     if (viewState.type === 'creds-detail') {
       const group = credsGroups.find(g => g.id === viewState.id);
-      if (!group) return <div>Not Found</div>;
+      if (!group) return <div className="p-8 text-red-500">ERROR: VAULT_NOT_FOUND</div>;
       return <CredsDetailView group={group} onUpdate={handleUpdateCreds} />;
     }
 
@@ -215,9 +180,17 @@ export const IdentityOverview: React.FC = () => {
          {/* Background Decoration */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-techCyan/5 via-transparent to-transparent pointer-events-none"></div>
 
-        <div className="mb-8 relative z-10 border-l-4 border-techCyan pl-4">
-          <h1 className="text-3xl font-bold text-white mb-2 tracking-wide uppercase font-mono">Team Overview</h1>
-          <p className="text-gray-500 font-mono text-sm">/ SYSTEM / DASHBOARD / MAIN</p>
+        <div className="mb-8 relative z-10 border-l-4 border-techCyan pl-4 flex justify-between items-end">
+          <div>
+            <h1 className="text-3xl font-bold text-white mb-2 tracking-wide uppercase font-mono">Team Overview</h1>
+            <p className="text-gray-500 font-mono text-sm">/ SYSTEM / DASHBOARD / MAIN</p>
+          </div>
+          <button 
+            onClick={handleCreateIdentity}
+            className="tech-btn px-4 py-2 flex items-center gap-2"
+          >
+            <Plus size={16} /> NEW_IDENTITY
+          </button>
         </div>
         
         {/* The Grid */}
@@ -230,6 +203,16 @@ export const IdentityOverview: React.FC = () => {
               />
             </div>
           ))}
+          {/* Add New Card (Empty State) */}
+          <div 
+            onClick={handleCreateIdentity}
+            className="group tech-panel p-5 cursor-pointer h-full flex flex-col items-center justify-center min-h-[300px] border-dashed border-gray-700 hover:border-techCyan/50 bg-transparent hover:bg-techCyan/5 transition-all"
+          >
+             <div className="w-16 h-16 rounded-full border border-gray-700 flex items-center justify-center text-gray-500 group-hover:text-techCyan group-hover:border-techCyan transition-colors">
+               <Plus size={32} />
+             </div>
+             <span className="mt-4 font-mono text-xs text-gray-500 uppercase tracking-widest group-hover:text-techCyan">Initialize New Unit</span>
+          </div>
         </div>
       </div>
     );
@@ -240,7 +223,6 @@ export const IdentityOverview: React.FC = () => {
       
       {/* --- SIDEBAR --- */}
       <div className="w-80 flex-shrink-0 flex flex-col border-r border-white/5 bg-surface z-20 shadow-[5px_0_20px_rgba(0,0,0,0.5)]">
-        
         
         {/* Global Nav for "Overview" */}
         <div className="p-4 border-b border-white/5">
@@ -263,7 +245,7 @@ export const IdentityOverview: React.FC = () => {
             <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2 font-mono">
               <Users size={12} /> Identities
             </h3>
-            <span className="text-[10px] text-gray-400 font-mono">[{identities.length}]</span>
+            <button onClick={handleCreateIdentity} className="text-gray-600 hover:text-techCyan"><Plus size={14}/></button>
           </div>
           
           <div className="overflow-y-auto flex-1 px-2 pb-4 space-y-1 custom-scrollbar pt-2">
@@ -277,7 +259,7 @@ export const IdentityOverview: React.FC = () => {
                   <img src={identity.avatarUrl} alt="" className="w-8 h-8 object-cover border border-gray-700 group-hover:border-techCyan/50" />
                   <div className="flex-1 min-w-0">
                     <div className="truncate text-sm font-bold text-gray-300 group-hover:text-white">{identity.firstName} {identity.lastName}</div>
-                    <div className="truncate text-[10px] text-gray-600 font-mono group-hover:text-techCyan/70 uppercase">Status: Active</div>
+                    <div className="truncate text-[10px] text-gray-600 font-mono group-hover:text-techCyan/70 uppercase">ID: {identity.id.slice(-4)}</div>
                   </div>
                 </div>
               </div>
@@ -311,23 +293,50 @@ export const IdentityOverview: React.FC = () => {
                      <span className="font-bold text-sm truncate text-gray-300 group-hover:text-white pr-2">{group.name}</span>
                      <span className="text-[9px] px-1 py-0.5 bg-black/60 text-gray-500 border border-white/5 font-mono">{group.pairs.length} VARS</span>
                    </div>
-                   <div className="text-[10px] text-gray-600 truncate font-mono group-hover:text-techOrange/80 transition-colors">{">> "}{group.id}</div>
+                   <div className="text-[10px] text-gray-600 truncate font-mono group-hover:text-techOrange/80 transition-colors">&gt;&gt; {group.id}</div>
                  </div>
               </div>
             ))}
           </div>
         </div>
         
-        
-
       </div>
 
       {/* --- MAIN CONTENT --- */}
       <div className="flex-1 flex flex-col min-w-0 relative">
         
-        
+        {/* Top Bar */}
+        <header className="h-16 border-b border-white/5 bg-background/80 backdrop-blur-md flex items-center justify-between px-8 sticky top-0 z-30">
+          
+          {/* Breadcrumbs / Title */}
+          <div className="flex items-center text-gray-500 text-xs font-mono tracking-widest uppercase">
+             <span className="hover:text-techCyan cursor-pointer transition-colors" onClick={handleBackToOverview}>NET</span>
+             <ChevronRight size={12} className="mx-2 text-gray-700" />
+             <span className="text-techCyan">
+               {viewState.type === 'overview' && 'DASHBOARD_VIEW'}
+               {viewState.type === 'identity-detail' && 'IDENTITY_PROTOCOL'}
+               {viewState.type === 'creds-detail' && 'SECURE_STORAGE'}
+             </span>
+          </div>
+
+          <div className="flex items-center gap-4">
+             <div className="relative hidden md:block group">
+               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 group-hover:text-techCyan transition-colors" size={14} />
+               <input 
+                 type="text" 
+                 placeholder="SEARCH_DATABASE..." 
+                 className="tech-input bg-transparent border border-white/10 pl-10 pr-4 py-1.5 text-xs focus:border-techCyan/50 w-64 transition-all"
+               />
+             </div>
+             <button className="relative p-2 text-gray-400 hover:text-white transition-colors border border-transparent hover:border-white/10">
+               <Bell size={18} />
+               <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-techOrange animate-pulse"></span>
+             </button>
+          </div>
+        </header>
+
         {/* Content Render */}
-        <main className="flex-1 min-h-0 relative bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-100">
+        <main className="flex-1 min-h-0 relative bg-gray-900 opacity-100">
            {renderMainContent()}
         </main>
 

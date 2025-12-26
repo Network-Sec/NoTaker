@@ -1,46 +1,7 @@
-/* --- BASE RESET & GLOBAL SETTINGS --- */
-:root {
-  color-scheme: dark;
-}
+/* --- IDENTITY OVERVIEW STYLES --- */
+/* Extracted from extDev/styles.css but without global resets to avoid conflicts */
 
-body {
-  margin: 0;
-  padding: 0;
-  background-color: #05070a;
-  color: #a0b3c6;
-  font-family: 'Segoe UI', 'Roboto', 'Helvetica', 'sans-serif';
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-*, *::before, *::after {
-  box-sizing: border-box;
-}
-
-/* FORCE SQUARE CORNERS GLOBALLY */
-*, .rounded, .rounded-lg, .rounded-full, .rounded-md, .rounded-xl {
-  border-radius: 0 !important;
-}
-
-/* Base element resets to prevent layout shifts if Tailwind preflight is missing */
-button, input, optgroup, select, textarea {
-  font-family: inherit;
-  font-size: 100%;
-  line-height: 1.15;
-  margin: 0;
-}
-
-button, [role="button"] {
-  cursor: pointer;
-}
-
-img, video {
-  display: block;
-  max-width: 100%;
-  height: auto;
-}
-
-/* --- CUSTOM SCROLLBAR --- */
+/* --- CUSTOM SCROLLBAR (Specific to this view or globally accepted) --- */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;

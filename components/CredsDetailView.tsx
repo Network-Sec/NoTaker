@@ -60,8 +60,21 @@ export const CredsDetailView: React.FC<Props> = ({ group, onUpdate }) => {
               <Key className="w-4 h-4" />
               <span className="text-xs font-bold tracking-widest uppercase">/ SYS / CREDENTIAL_MANAGER</span>
             </div>
-            <h1 className="text-3xl font-bold text-white mb-2 font-mono uppercase">{group.name}</h1>
-            <p className="text-gray-400 font-light max-w-2xl">{group.description}</p>
+            
+            {/* Editable Header */}
+            <input 
+              value={group.name} 
+              onChange={(e) => onUpdate({ ...group, name: e.target.value, updatedAt: new Date().toISOString() })}
+              className="text-3xl font-bold text-white mb-2 font-mono uppercase bg-transparent border-b border-transparent hover:border-white/10 focus:border-techCyan outline-none w-full"
+              placeholder="VAULT_NAME"
+            />
+            <textarea 
+              value={group.description} 
+              onChange={(e) => onUpdate({ ...group, description: e.target.value, updatedAt: new Date().toISOString() })}
+              className="text-gray-400 font-light max-w-2xl bg-transparent border-b border-transparent hover:border-white/10 focus:border-techCyan outline-none w-full resize-none h-16"
+              placeholder="Vault Description..."
+            />
+
             <div className="mt-4 flex items-center gap-2 text-xs text-gray-500 font-mono">
               <div className="w-2 h-2 bg-green-500"></div>
               <span>LAST_SYNC: {new Date(group.updatedAt).toISOString()}</span>

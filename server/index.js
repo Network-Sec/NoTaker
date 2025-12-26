@@ -67,6 +67,10 @@ const appDb = new sqlite3.Database(appDbPath, (err) => {
         appDb.run(`CREATE TABLE IF NOT EXISTS events (id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT, title TEXT, description TEXT, time TEXT, duration TEXT, link TEXT)`);
         appDb.run(`CREATE TABLE IF NOT EXISTS history (id INTEGER PRIMARY KEY AUTOINCREMENT, url TEXT, title TEXT, visit_time TEXT, source TEXT)`); 
         appDb.run(`CREATE TABLE IF NOT EXISTS ai_conversations (id INTEGER PRIMARY KEY AUTOINCREMENT, timestamp TEXT, type TEXT, content TEXT, model TEXT)`); 
+        
+        // Identity & Credentials Tables
+        appDb.run(`CREATE TABLE IF NOT EXISTS identities (id TEXT PRIMARY KEY, firstName TEXT, lastName TEXT, username TEXT, headline TEXT, email TEXT, phone TEXT, location TEXT, about TEXT, avatarUrl TEXT, bannerUrl TEXT, experience TEXT, education TEXT, skills TEXT, personalCredentials TEXT, linkedVaultIds TEXT, connections INTEGER)`);
+        appDb.run(`CREATE TABLE IF NOT EXISTS credential_groups (id TEXT PRIMARY KEY, name TEXT, description TEXT, pairs TEXT, updatedAt TEXT)`);
 
 
         // 2. FORCE MIGRATION: Link Preview Column
@@ -475,6 +479,100 @@ app.put('/api/settings', (req, res) => {
             return res.status(500).json({ error: 'Failed to save settings' });
         }
         res.json({ message: 'Settings saved successfully.' });
+    });
+});
+
+// --- Identity Routes ---
+
+app.get('/api/identities', (req, res) => {
+    appDb.all('SELECT * FROM identities', (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        const identities = rows.map(row => ({
+            ...row,
+            experience: JSON.parse(row.experience || '[]'),
+            education: JSON.parse(row.education || '[]'),
+            skills: JSON.parse(row.skills || '[]'),
+            personalCredentials: JSON.parse(row.personalCredentials || '[]'),
+            linkedVaultIds: JSON.parse(row.linkedVaultIds || '[]')
+        }));
+        res.json(identities);
+    });
+});
+
+app.post('/api/identities', (req, res) => {
+    const id = `id_${Date.now()}`;
+    const { firstName, lastName, username, headline, email, phone, location, about, avatarUrl, bannerUrl, experience, education, skills, personalCredentials, linkedVaultIds, connections } = req.body;
+    
+    appDb.run(`INSERT INTO identities (id, firstName, lastName, username, headline, email, phone, location, about, avatarUrl, bannerUrl, experience, education, skills, personalCredentials, linkedVaultIds, connections) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [id, firstName, lastName, username, headline, email, phone, location, about, avatarUrl, bannerUrl, JSON.stringify(experience), JSON.stringify(education), JSON.stringify(skills), JSON.stringify(personalCredentials), JSON.stringify(linkedVaultIds), connections],
+        function(err) {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json({ id });
+        }
+    );
+});
+
+app.put('/api/identities/:id', (req, res) => {
+    const { firstName, lastName, username, headline, email, phone, location, about, avatarUrl, bannerUrl, experience, education, skills, personalCredentials, linkedVaultIds, connections } = req.body;
+    
+    appDb.run(`UPDATE identities SET firstName = ?, lastName = ?, username = ?, headline = ?, email = ?, phone = ?, location = ?, about = ?, avatarUrl = ?, bannerUrl = ?, experience = ?, education = ?, skills = ?, personalCredentials = ?, linkedVaultIds = ?, connections = ? WHERE id = ?`,
+        [firstName, lastName, username, headline, email, phone, location, about, avatarUrl, bannerUrl, JSON.stringify(experience), JSON.stringify(education), JSON.stringify(skills), JSON.stringify(personalCredentials), JSON.stringify(linkedVaultIds), connections, req.params.id],
+        function(err) {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json({ message: 'Updated' });
+        }
+    );
+});
+
+app.delete('/api/identities/:id', (req, res) => {
+    appDb.run('DELETE FROM identities WHERE id = ?', req.params.id, function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ message: 'Deleted' });
+    });
+});
+
+// --- Credential Group Routes ---
+
+app.get('/api/credential-groups', (req, res) => {
+    appDb.all('SELECT * FROM credential_groups', (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        const groups = rows.map(row => ({
+            ...row,
+            pairs: JSON.parse(row.pairs || '[]')
+        }));
+        res.json(groups);
+    });
+});
+
+app.post('/api/credential-groups', (req, res) => {
+    const id = `group_${Date.now()}`;
+    const { name, description, pairs, updatedAt } = req.body;
+    
+    appDb.run(`INSERT INTO credential_groups (id, name, description, pairs, updatedAt) VALUES (?, ?, ?, ?, ?)`,
+        [id, name, description, JSON.stringify(pairs), updatedAt],
+        function(err) {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json({ id });
+        }
+    );
+});
+
+app.put('/api/credential-groups/:id', (req, res) => {
+    const { name, description, pairs, updatedAt } = req.body;
+    
+    appDb.run(`UPDATE credential_groups SET name = ?, description = ?, pairs = ?, updatedAt = ? WHERE id = ?`,
+        [name, description, JSON.stringify(pairs), updatedAt, req.params.id],
+        function(err) {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json({ message: 'Updated' });
+        }
+    );
+});
+
+app.delete('/api/credential-groups/:id', (req, res) => {
+    appDb.run('DELETE FROM credential_groups WHERE id = ?', req.params.id, function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ message: 'Deleted' });
     });
 });
 
