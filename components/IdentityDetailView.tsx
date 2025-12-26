@@ -20,7 +20,6 @@ export const IdentityDetailView: React.FC<Props> = ({ identity, availableVaults 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Sync data if identity prop changes (and not editing)
   useEffect(() => {
     if (!isEditing) {
       setData(identity);
@@ -33,9 +32,15 @@ export const IdentityDetailView: React.FC<Props> = ({ identity, availableVaults 
 
   const handleSave = async () => {
     setIsSaving(true);
-    await onSave(data);
-    setIsSaving(false);
-    setIsEditing(false);
+    try {
+        await onSave(data);
+        setIsEditing(false);
+    } catch (e) {
+        console.error("Save failed", e);
+        // Optional: Add toast notification here
+    } finally {
+        setIsSaving(false);
+    }
   };
 
   const handleCancel = () => {
