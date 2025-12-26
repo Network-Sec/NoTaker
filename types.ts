@@ -125,6 +125,16 @@ export interface AIConversationItem {
     model: string;
 }
 
+export interface ToolboxItem {
+    id: number;
+    title: string;
+    url: string;
+    description: string;
+    iconUrl: string;
+    imageUrl: string;
+    timestamp: string;
+}
+
 // Settings Configuration
 export interface SettingsConfig {
     firefox: {

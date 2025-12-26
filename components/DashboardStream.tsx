@@ -18,10 +18,11 @@ interface Props {
     onDeleteMemo: (id: number) => void;
     onOpenImageEditor: (memo: Memo) => void;
     onTimestampClick: (time: string) => void;
+    onAddToToolbox?: (item: { url: string; title: string }) => void;
 }
 
 const DashboardStreamComponent = (
-  { memos, bookmarks, history, onTagSelect, selectedDate, onUpdateMemo, onDeleteMemo, onOpenImageEditor, onTimestampClick }: Props,
+  { memos, bookmarks, history, onTagSelect, selectedDate, onUpdateMemo, onDeleteMemo, onOpenImageEditor, onTimestampClick, onAddToToolbox }: Props,
   ref: React.Ref<HTMLDivElement>
 ) => {
     console.log('[DashboardStream] Component Render. Props:', { memos, bookmarks, history, selectedDate });
@@ -136,6 +137,7 @@ const DashboardStreamComponent = (
                     onDeleteMemo={onDeleteMemo} 
                     onOpenImageEditor={onOpenImageEditor} 
                     onTimestampClick={onTimestampClick}
+                    onAddToToolbox={onAddToToolbox}
                 />
             ))}
         </div>

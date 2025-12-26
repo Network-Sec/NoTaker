@@ -75,9 +75,13 @@ const appDb = new sqlite3.Database(appDbPath, (err) => {
         
         appDb.run(`CREATE TABLE IF NOT EXISTS ai_conversations (id INTEGER PRIMARY KEY AUTOINCREMENT, timestamp TEXT, type TEXT, content TEXT, model TEXT)`); 
         
+        // New table for explicit empty task days
+        appDb.run(`CREATE TABLE IF NOT EXISTS task_day_states (date TEXT PRIMARY KEY, is_explicitly_empty INTEGER DEFAULT 0)`);
+        
         // Identity & Credentials Tables
         appDb.run(`CREATE TABLE IF NOT EXISTS identities (id TEXT PRIMARY KEY, firstName TEXT, lastName TEXT, username TEXT, headline TEXT, email TEXT, phone TEXT, location TEXT, about TEXT, avatarUrl TEXT, bannerUrl TEXT, experience TEXT, education TEXT, skills TEXT, personalCredentials TEXT, linkedVaultIds TEXT, connections INTEGER)`);
         appDb.run(`CREATE TABLE IF NOT EXISTS credential_groups (id TEXT PRIMARY KEY, name TEXT, description TEXT, pairs TEXT, updatedAt TEXT)`);
+        appDb.run(`CREATE TABLE IF NOT EXISTS toolbox_items (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, url TEXT, description TEXT, icon_url TEXT, image_url TEXT, timestamp TEXT)`);
 
         // Migrations
         appDb.run("ALTER TABLE memos ADD COLUMN link_preview TEXT", (err) => {});
@@ -106,6 +110,57 @@ app.use('/uploads', express.static(UPLOAD_DIR));
 app.use('/api/ai', aiRoutes(appDb, ollamaClient));
 app.use('/api/notebooks', notebookRoutes(appDb)); 
 app.use('/api', identityRoutes(appDb));
+
+// Toolbox
+app.get('/api/toolbox', (req, res) => {
+    appDb.all('SELECT * FROM toolbox_items ORDER BY timestamp DESC', (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows.map(r => ({
+            id: r.id,
+            title: r.title,
+            url: r.url,
+            description: r.description,
+            iconUrl: r.icon_url,
+            imageUrl: r.image_url,
+            timestamp: r.timestamp
+        })));
+    });
+});
+app.post('/api/toolbox', async (req, res) => {
+    const { url, title, description } = req.body;
+    try {
+        const preview = await fetchLinkPreview(url);
+        const finalTitle = title || preview.title || url;
+        const finalDesc = description || preview.description || '';
+        const iconUrl = preview.faviconUrl || '';
+        const imageUrl = preview.imageUrl || '';
+        const timestamp = new Date().toISOString();
+
+        appDb.run(`INSERT INTO toolbox_items (title, url, description, icon_url, image_url, timestamp) VALUES (?, ?, ?, ?, ?, ?)`,
+            [finalTitle, url, finalDesc, iconUrl, imageUrl, timestamp],
+            function(err) {
+                if (err) return res.status(500).json({ error: err.message });
+                res.json({ id: this.lastID, title: finalTitle, url, description: finalDesc, iconUrl, imageUrl, timestamp });
+            }
+        );
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+app.delete('/api/toolbox/:id', (req, res) => {
+    appDb.run('DELETE FROM toolbox_items WHERE id = ?', req.params.id, function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ message: 'Deleted' });
+    });
+});
+app.put('/api/toolbox/:id', (req, res) => {
+    const { title, url, description } = req.body;
+    appDb.run('UPDATE toolbox_items SET title = ?, url = ?, description = ? WHERE id = ?', 
+        [title, url, description, req.params.id], function(err) {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json({ message: 'Updated' });
+    });
+});
 
 // --- CORE ROUTES ---
 
@@ -188,25 +243,97 @@ app.get('/api/history', (req, res) => {
 app.get('/api/tasks', (req, res) => {
     const { date } = req.query;
     if (!date) return res.status(400).json({ error: 'Date required' });
-    appDb.all('SELECT id, content, quadrant, completed FROM tasks WHERE date = ?', [date], (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
-        if (rows.length > 0) return res.json(rows);
-        appDb.get('SELECT date FROM tasks WHERE date < ? ORDER BY date DESC LIMIT 1', [date], (err, row) => {
-            if (!row) return res.json([]);
-            appDb.all('SELECT id, content, quadrant, completed FROM tasks WHERE date = ?', [row.date], (err, inherited) => {
-                res.json(err ? [] : inherited);
+
+    // Step 1: Check if this date has an explicitly empty task state
+    appDb.get('SELECT is_explicitly_empty FROM task_day_states WHERE date = ?', [date], (err, dayState) => {
+        if (err) {
+            console.error(`[Backend] Error checking task_day_states for date ${date}:`, err.message);
+            return res.status(500).json({ error: err.message });
+        }
+
+        if (dayState && dayState.is_explicitly_empty === 1) {
+            console.log(`[Backend] Tasks for date ${date} are explicitly empty.`);
+            return res.json([]); // Explicitly empty, return no tasks
+        }
+
+        // Step 2: If not explicitly empty, check for tasks directly for this date
+        appDb.all('SELECT id, content, quadrant, completed FROM tasks WHERE date = ?', [date], (err, rows) => {
+            if (err) {
+                console.error(`[Backend] Error fetching tasks for date ${date}:`, err.message);
+                return res.status(500).json({ error: err.message });
+            }
+            if (rows.length > 0) {
+                console.log(`[Backend] Found ${rows.length} tasks for date ${date}.`);
+                return res.json(rows); // If tasks exist for date, return them
+            }
+            
+            // Step 3: If no tasks for this date (and not explicitly empty), inherit from the most recent previous day
+            appDb.get('SELECT date FROM tasks WHERE date < ? ORDER BY date DESC LIMIT 1', [date], (err, row) => {
+                if (err) {
+                    console.error(`[Backend] Error fetching previous day for inheritance for date ${date}:`, err.message);
+                    return res.status(500).json({ error: err.message });
+                }
+                if (!row) {
+                    console.log(`[Backend] No previous tasks to inherit for date ${date}.`);
+                    return res.json([]); // No prior tasks, return empty
+                }
+                appDb.all('SELECT id, content, quadrant, completed FROM tasks WHERE date = ?', [row.date], (err, inherited) => {
+                    if (err) {
+                        console.error(`[Backend] Error inheriting tasks from ${row.date} for date ${date}:`, err.message);
+                        return res.status(500).json({ error: err.message });
+                    }
+                    console.log(`[Backend] Inherited ${inherited.length} tasks from ${row.date} for date ${date}.`);
+                    res.json(inherited); // Return tasks from most recent previous day
+                });
             });
         });
     });
 });
 app.post('/api/tasks', (req, res) => {
     const { date, tasks } = req.body;
-    if (!date || !tasks) return res.status(400).json({ error: 'Data missing' });
+    console.log(`[Backend] Received /api/tasks POST for date: ${date}, tasks count: ${tasks.length}`);
+    if (!date || !tasks) {
+        console.error('[Backend] /api/tasks POST: Missing date or tasks in request body.');
+        return res.status(400).json({ error: 'Data missing' });
+    }
+
     appDb.serialize(() => {
-        appDb.run('DELETE FROM tasks WHERE date = ?', [date]);
-        const stmt = appDb.prepare('INSERT OR REPLACE INTO tasks (id, content, quadrant, date, completed) VALUES (?, ?, ?, ?, ?)');
-        tasks.forEach(t => stmt.run(t.id, t.content, t.quadrant, date, t.completed ? 1 : 0));
-        stmt.finalize(() => res.json({ message: 'Saved' }));
+        // Step 1: Delete existing tasks for this date
+        appDb.run('DELETE FROM tasks WHERE date = ?', [date], function(err) {
+            if (err) {
+                console.error(`[Backend] Error deleting tasks for date ${date}:`, err.message);
+                // Even on error, try to proceed with state update if this.changes isn't defined
+            }
+            console.log(`[Backend] Deleted ${this ? this.changes : 'N/A'} existing tasks for date ${date}.`);
+
+            // Step 2: Update task_day_states to record if this day is explicitly empty
+            const isExplicitlyEmpty = tasks.length === 0 ? 1 : 0;
+            appDb.run('INSERT OR REPLACE INTO task_day_states (date, is_explicitly_empty) VALUES (?, ?)', 
+                      [date, isExplicitlyEmpty], function(err) {
+                if (err) {
+                    console.error(`[Backend] Error updating task_day_states for date ${date}:`, err.message);
+                    return res.status(500).json({ error: err.message });
+                }
+                console.log(`[Backend] task_day_states updated for ${date}: explicitly empty = ${isExplicitlyEmpty}.`);
+
+                if (tasks.length === 0) {
+                    console.log(`[Backend] No tasks to insert for date ${date}. Save complete.`);
+                    return res.json({ message: 'Saved (no tasks to insert)' });
+                }
+                
+                // Step 3: Insert or replace new tasks for this date
+                const stmt = appDb.prepare('INSERT OR REPLACE INTO tasks (id, content, quadrant, date, completed) VALUES (?, ?, ?, ?, ?)');
+                tasks.forEach(t => stmt.run(t.id, t.content, t.quadrant, date, t.completed ? 1 : 0));
+                stmt.finalize(function(err) {
+                    if (err) {
+                        console.error(`[Backend] Error inserting tasks for date ${date}:`, err.message);
+                        return res.status(500).json({ error: err.message });
+                    }
+                    console.log(`[Backend] Inserted ${this ? this.changes : 'N/A'} new tasks for date ${date}. Save complete.`);
+                    res.json({ message: 'Saved' });
+                });
+            });
+        });
     });
 });
 

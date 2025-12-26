@@ -11,12 +11,13 @@ const YOUTUBE_URL_REGEX = /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/
 interface MemoItemProps {
     memo: Memo;
     onTagSelect: (tag: string) => void;
-    onUpdateMemo: (id: number, content: string, tags: string[], timestamp?: string) => void; // Updated to accept timestamp
+    onUpdateMemo: (id: number, content: string, tags: string[], timestamp?: string) => void;
     onDeleteMemo: (id: number) => void;
     onOpenImageEditor: (memo: Memo) => void;
+    onAddToToolbox?: (item: { url: string; title: string }) => void; // New prop
 }
 
-export const MemoItem = ({ memo, onTagSelect, onUpdateMemo, onDeleteMemo, onOpenImageEditor }: MemoItemProps) => {
+export const MemoItem = ({ memo, onTagSelect, onUpdateMemo, onDeleteMemo, onOpenImageEditor, onAddToToolbox }: MemoItemProps) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editText, setEditText] = useState('');
     const [editTags, setEditTags] = useState<string[]>([]);
@@ -183,9 +184,14 @@ export const MemoItem = ({ memo, onTagSelect, onUpdateMemo, onDeleteMemo, onOpen
                         <div className="dropdown-menu">
                             <button onClick={() => { setIsEditing(true); setShowMenu(false); }}>✎ Edit Content</button>
                             <button onClick={() => { setIsEditing(true); setShowMenu(false); }}>🏷️ Edit Tags</button>
-                            <button onClick={() => { setIsEditingTime(true); setShowMenu(false); }}>⏰ Edit Time</button> {/* New Edit Time button */}
+                            <button onClick={() => { setIsEditingTime(true); setShowMenu(false); }}>⏰ Edit Time</button>
                             {memo.type === 'image' && (
                                 <button onClick={() => { onOpenImageEditor(memo); setShowMenu(false); }}>✂️ Crop/Edit Image</button>
+                            )}
+                            {memo.type === 'link' && onAddToToolbox && ( // New menu item for links
+                                <button onClick={() => { onAddToToolbox({ url: memo.content, title: memo.title || memo.content }); setShowMenu(false); }}>
+                                    ➕ Add to Toolbox
+                                </button>
                             )}
                             <div className="divider" />
                             <button className="delete-btn" onClick={() => { onDeleteMemo(memo.id); }}>🗑️ Delete</button>

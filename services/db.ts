@@ -88,14 +88,14 @@ export const getHistory = async (): Promise<BrowserHistoryEntry[]> => {
 };
 
 // --- Notebooks (API) ---
-export const getNotebooks = async (): Promise<Notebook[]> => {
+export const getNotebooks = async (): Promise<Notebook[] | null> => {
     try {
         const res = await fetch(`${API_URL}/api/notebooks`);
         if (!res.ok) throw new Error(`Status: ${res.status}`);
         return await res.json();
     } catch (error) {
         console.error("[db.ts] Failed to fetch notebooks:", error);
-        return []; 
+        return null; 
     }
 };
 
@@ -279,5 +279,39 @@ export const updateCredentialGroup = async (group: SharedCredentialGroup): Promi
 export const deleteCredentialGroup = async (id: string): Promise<void> => {
     try {
         await fetch(`${API_URL}/api/credential-groups/${id}`, { method: 'DELETE' });
+    } catch (error) {}
+};
+
+// --- Toolbox ---
+export const getToolboxItems = async (): Promise<ToolboxItem[]> => {
+    try {
+        const response = await fetch(`${API_URL}/api/toolbox`);
+        return response.ok ? await response.json() : [];
+    } catch (error) { return []; }
+};
+
+export const createToolboxItem = async (item: { url: string; title?: string; description?: string }): Promise<ToolboxItem> => {
+    const response = await fetch(`${API_URL}/api/toolbox`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(item)
+    });
+    if (!response.ok) throw new Error('Failed');
+    return await response.json();
+};
+
+export const deleteToolboxItem = async (id: number): Promise<void> => {
+    try {
+        await fetch(`${API_URL}/api/toolbox/${id}`, { method: 'DELETE' });
+    } catch (error) {}
+};
+
+export const updateToolboxItem = async (id: number, item: Partial<ToolboxItem>): Promise<void> => {
+    try {
+        await fetch(`${API_URL}/api/toolbox/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(item)
+        });
     } catch (error) {}
 };

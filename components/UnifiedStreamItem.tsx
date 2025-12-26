@@ -13,6 +13,7 @@ interface UnifiedStreamItemProps {
     onDeleteMemo: (id: number) => void;
     onOpenImageEditor: (memo: Memo) => void;
     onTimestampClick: (time: string) => void;
+    onAddToToolbox?: (item: { url: string; title: string }) => void;
 }
 
 export const UnifiedStreamItem = ({ 
@@ -22,7 +23,8 @@ export const UnifiedStreamItem = ({
     onUpdateMemo,
     onDeleteMemo,
     onOpenImageEditor,
-    onTimestampClick
+    onTimestampClick,
+    onAddToToolbox
 }: UnifiedStreamItemProps) => {
     return (
         <div className="unified-stream-row">
@@ -47,6 +49,7 @@ export const UnifiedStreamItem = ({
                                 onUpdateMemo={onUpdateMemo}
                                 onDeleteMemo={onDeleteMemo}
                                 onOpenImageEditor={onOpenImageEditor}
+                                onAddToToolbox={onAddToToolbox}
                             />
                         );
                     }
@@ -77,6 +80,7 @@ export const UnifiedStreamItem = ({
                                 key={item.id} 
                                 item={item as (Bookmark | BrowserHistoryEntry)} 
                                 onTimestampClick={onTimestampClick}
+                                onAddToToolbox={onAddToToolbox}
                             />
                         );
                     }

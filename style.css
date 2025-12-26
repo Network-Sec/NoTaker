@@ -11,6 +11,8 @@
   --spacing: 0.25rem;
   --font-sans: 'Inter', ui-sans-serif, system-ui;
   --font-mono: 'Fira Code', ui-monospace, monospace;
+  --font-display: 'Orbitron', sans-serif; /* For prominent headers/titles */
+  --font-accent: 'Zen Dots', sans-serif;  /* For small, stylized text */
 }
 
 /* 4. LAYER ORDERING */

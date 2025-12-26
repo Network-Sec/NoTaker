@@ -2,7 +2,7 @@ import './style.css'; // This must be the very first import
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
-import type { MainView, Memo, Bookmark, Notebook, Task, EisenhowerQuadrant, BrowserHistoryEntry, LinkPreviewData } from './types';
+import type { MainView, Memo, Bookmark, Notebook, Task, EisenhowerQuadrant, BrowserHistoryEntry, LinkPreviewData, ToolboxItem } from './types';
 import { isSameDay } from './utils';
 import * as db from './services/db';
 
@@ -40,15 +40,16 @@ const App = () => {
   const [activeTag, setActiveTag] = useState<string | null>(null);
 
   const [memos, setMemos] = useState<Memo[]>([]);
-  const [notebooks, setNotebooks] = useState<Notebook[]>([]);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [history, setHistory] = useState<BrowserHistoryEntry[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
+  const [toolboxItems, setToolboxItems] = useState<ToolboxItem[]>([]);
   const [aiConversations, setAiConversations] = useState<AIConversationItem[]>([]); // New AI Conversations state
   const [editingMemo, setEditingMemo] = useState<Memo | null>(null);
   // const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false); // REMOVED
   const [tasksLoaded, setTasksLoaded] = useState(false);
+  const [initialDataLoaded, setInitialDataLoaded] = useState(false); // New state for initial data load
   const [newMemoTimestamp, setNewMemoTimestamp] = useState<string>(new Date().toISOString());
   const [continueTimestamp, setContinueTimestamp] = useState(false);
   const [scrollToMemoId, setScrollToMemoId] = useState<number | null>(null);
@@ -58,7 +59,8 @@ const App = () => {
   const dashboardStreamRef = useRef<HTMLDivElement>(null);
   const aiConversationStreamRef = useRef<HTMLDivElement>(null); // Ref for AI conversation stream
   const prevSelectedDateRef = useRef<Date | null>(null);
-  const SEARCH_BAR_HEIGHT_OFFSET = 60; // Estimated height of fixed GlobalSearchBar and any padding
+  const prevMemosLength = useRef(0); // Add this ref
+  const initialScrollDoneRef = useRef(false); // New ref for initial scroll
 
   // Effect to keep track of the previous selectedDate
   useEffect(() => {
@@ -86,22 +88,31 @@ const App = () => {
 
   // --- Load Data ---
   useEffect(() => {
-      Promise.all([
-          db.getMemos(), db.getNotebooks(), db.getBookmarks(), db.getHistory(), db.getEvents(), db.getAIConversations(), db.getSettings() // Add db.getSettings()
-      ]).then(([m, n, b, h, e, a, s]) => { // Add s for settings
-          setMemos(m); 
-          console.log('[App] Memos loaded:', m); // Log memos
-          setNotebooks(n); 
-          // console.log('[Notebooks Effect] Raw notebooks data (n) from DB:', n); // Removed notebook log
-          // console.log('[Notebooks Effect] Notebooks loaded (after setNotebooks):', notebooks); // Removed notebook log
-          setBookmarks(b); 
-          console.log('[App] Bookmarks loaded:', b); // Log bookmarks
-          setHistory(h); 
-          console.log('[App] History loaded:', h); // Log history
-          setEvents(e); setAiConversations(a); setAppSettings(s || { // Initialize appSettings, with fallback
-            firefox: {}, chrome: {}, ai: {}, general: { importInterval: 30, darkMode: false, autoScroll: true }, generic: {}
-          });
-      }).catch(console.error);
+    const loadData = () => {
+        Promise.all([
+            db.getMemos(), db.getBookmarks(), db.getHistory(), db.getEvents(), db.getAIConversations(), db.getSettings(), db.getToolboxItems() 
+        ]).then(([m, b, h, e, a, s, t]) => { 
+            setMemos(m); 
+            console.log('[App] Memos loaded:', m); 
+            setBookmarks(b); 
+            console.log('[App] Bookmarks loaded:', b); 
+            setHistory(h); 
+            console.log('[App] History loaded:', h); 
+            setEvents(e); setAiConversations(a); setAppSettings(s || { 
+              firefox: {}, chrome: {}, ai: {}, general: { importInterval: 30, darkMode: false, autoScroll: true }, generic: {}
+            });
+            setToolboxItems(t || []);
+            setInitialDataLoaded(true); 
+            sessionStorage.setItem('initialLoadDone', 'true');
+        }).catch(console.error);
+    };
+
+    if (sessionStorage.getItem('initialLoadDone')) {
+        loadData();
+    } else {
+        console.log('[App] First startup detected, delaying frontend load by 5 seconds...');
+        setTimeout(loadData, 5000);
+    }
   }, []);
 
   // Effect to save appSettings whenever they change
@@ -113,20 +124,35 @@ const App = () => {
   // --- Comprehensive Auto-Scrolling Effect for Memo Stream ---
   useEffect(() => {
     const streamElement = dashboardStreamRef.current;
-    if (streamElement && mainView === 'dashboard' && mainStreamViewMode === 'memo') { // Only auto-scroll memo stream when active
-      const isScrolledToBottom = streamElement.scrollHeight - streamElement.clientHeight <= streamElement.scrollTop + 1; // +1 for buffer
+    if (streamElement && mainView === 'dashboard' && mainStreamViewMode === 'memo') {
+      const isScrolledToBottom = streamElement.scrollHeight - streamElement.clientHeight <= streamElement.scrollTop + 1;
       
-      // Scroll to bottom on initial load, view change to dashboard, new memos if already at bottom, or on date change,
-      // but NOT if we are continuing a timestamp, as that means a specific scroll will follow.
-      if (
-        memos.length === 0 || 
-        isScrolledToBottom || 
-        (prevSelectedDateRef.current?.toDateString() !== selectedDate.toDateString() && !continueTimestamp)
-      ) {
+      // New condition for initial load scroll: only if initialDataLoaded is true and we haven't scrolled yet
+      const isInitialLoadScroll = initialDataLoaded && !initialScrollDoneRef.current;
+
+      console.log(`[App - AutoScroll Effect] Triggered. Memos length: ${memos.length}, prevMemosLength: ${prevMemosLength.current}, isScrolledToBottom: ${isScrolledToBottom}, isDateChange: ${prevSelectedDateRef.current?.toDateString() !== selectedDate.toDateString() && !continueTimestamp}, isInitialLoadScroll: ${isInitialLoadScroll}`);
+
+      // Condition 1: New memos added and user was already at the bottom
+      const hasNewMemosAndUserAtBottom = memos.length > prevMemosLength.current && isScrolledToBottom;
+      
+      // Condition 2: Selected date changed and not continuing a timestamp
+      const isDateChange = prevSelectedDateRef.current?.toDateString() !== selectedDate.toDateString() && !continueTimestamp;
+
+      // Scroll if new memos arrived and user was at bottom, or if date changed, OR on initial data load
+      if (hasNewMemosAndUserAtBottom || isDateChange || isInitialLoadScroll) {
         streamElement.scrollTop = streamElement.scrollHeight;
+        console.log(`[App - AutoScroll Effect] Scrolled. scrollHeight=${streamElement.scrollHeight}, clientHeight=${streamElement.clientHeight}`);
+        if (isInitialLoadScroll) {
+            initialScrollDoneRef.current = true; // Mark initial scroll as done
+        }
+      } else {
+        console.log('[App - AutoScroll Effect] Scroll condition not met.');
       }
+      prevMemosLength.current = memos.length; // Update for next render
+    } else {
+        console.log('[App - AutoScroll Effect] Skipped (ref null or not dashboard memo view).');
     }
-  }, [memos.length, mainView, selectedDate, continueTimestamp, mainStreamViewMode]);
+  }, [memos, mainView, selectedDate, continueTimestamp, mainStreamViewMode, initialDataLoaded]);
 
   // Auto-scrolling effect for AI conversation stream
   useEffect(() => {
@@ -175,11 +201,7 @@ const App = () => {
     }
   }, [memos, scrollToMemoId, mainStreamViewMode]);
 
-  // Effect to save notebooks whenever the notebooks state changes
-  useEffect(() => {
-    console.log('[Notebooks Effect] Saving notebooks:', notebooks);
-    db.saveNotebooks(notebooks);
-  }, [notebooks]);
+
 
   // --- Memo Handlers ---
   const addMemo = useCallback(async (type: 'text' | 'image' | 'link', content: string, tags: string[]): Promise<number> => {
@@ -258,13 +280,34 @@ const App = () => {
       }
       setEditingMemo(null);
   }, [memos, updateMemo]);
-
-  const addNotebook = useCallback(() => setNotebooks(prev => [{id: Date.now(), timestamp: new Date().toISOString(), title:'Untitled', blocks:[]}, ...prev]), []);
-  const updateNotebook = useCallback((id: number, u: Partial<Notebook>) => setNotebooks(prev => prev.map(n => n.id === id ? { ...n, ...u } : n)), []);
-  const deleteNotebook = useCallback((id: number) => setNotebooks(prev => prev.filter(n => n.id !== id)), []);
   
   const addBookmark = useCallback((url: string, title: string) => setBookmarks(prev => [...prev, {id:`bm-${Date.now()}`, url, title, description:'', timestamp: new Date().toISOString()}]), []);
   const deleteBookmark = useCallback((id: string) => setBookmarks(prev => prev.filter(b => b.id !== id)), []);
+  
+  const addToolboxItem = useCallback(async (item: { url: string; title?: string }) => {
+      try {
+          const newItem = await db.createToolboxItem(item);
+          setToolboxItems(prev => [newItem, ...prev]);
+      } catch (e) { 
+          console.error(e); 
+      }
+  }, []);
+
+  const deleteToolboxItem = useCallback(async (id: number) => {
+      if(window.confirm('Are you sure you want to delete this tool?')) {
+          setToolboxItems(prev => prev.filter(i => i.id !== id));
+          await db.deleteToolboxItem(id);
+      }
+  }, []);
+
+  const updateToolboxItem = useCallback(async (item: ToolboxItem) => {
+      try {
+          await db.updateToolboxItem(item.id, item);
+          setToolboxItems(prev => prev.map(i => i.id === item.id ? item : i));
+      } catch (e) {
+          console.error(e);
+      }
+  }, []);
 
   const addEvent = useCallback(async (event: Omit<Event, 'id'>) => {
     try {
@@ -340,7 +383,7 @@ const App = () => {
       const month = (selectedDate.getMonth() + 1).toString().padStart(2, '0');
       const day = selectedDate.getDate().toString().padStart(2, '0');
       const dateString = `${year}-${month}-${day}`;
-      console.log(`[Frontend] deleteTask called for ${dateString}. Saving tasks:`, newTasks);
+      console.log(`[Frontend] deleteTask called for ${dateString}. Filtering out ID: ${id}. Remaining tasks:`, newTasks);
       db.saveTasks(dateString, newTasks); // Explicit save
       return newTasks;
     });
@@ -391,13 +434,14 @@ const App = () => {
                   {mainStreamViewMode === 'memo' ? (
                     <>
                       {activeTag && <div className="filter-status"><span>Filtering by: <strong>#{activeTag}</strong></span><button className="clear-filter-button" onClick={() => setActiveTag(null)}>Clear</button></div>}
-                      <DashboardStream 
-                        ref={dashboardStreamRef}
-                        memos={memos} bookmarks={bookmarks} history={history} 
-                        onTagSelect={handleTagSelect} selectedDate={selectedDate} 
-                        onUpdateMemo={updateMemo} onDeleteMemo={deleteMemo} onOpenImageEditor={handleOpenImageEditor}
-                        onTimestampClick={(time) => { setNewMemoTimestamp(time); setContinueTimestamp(true); }}
-                      />
+                                            <DashboardStream 
+                                              ref={dashboardStreamRef}
+                                              memos={memos} bookmarks={bookmarks} history={history} 
+                                              onTagSelect={handleTagSelect} selectedDate={selectedDate} 
+                                              onUpdateMemo={updateMemo} onDeleteMemo={deleteMemo} onOpenImageEditor={handleOpenImageEditor}
+                                              onTimestampClick={(time) => { setNewMemoTimestamp(time); setContinueTimestamp(true); }}
+                                              onAddToToolbox={addToolboxItem}
+                                            />
                       <MemoInput 
                         onAddMemo={addMemo} 
                         timestamp={newMemoTimestamp} 
@@ -429,10 +473,10 @@ const App = () => {
           </div>
         );
       case 'gallery': return <GalleryView memos={memos} onImageSelect={d => { setSelectedDate(d); setMainView('dashboard'); }} />;
-      case 'notebooks': return <NotebookView notebooks={notebooks} onAddNotebook={addNotebook} onUpdateNotebook={updateNotebook} onDeleteNotebook={deleteNotebook} />;
-      case 'bookmarks': return <BookmarkView allBookmarksAndHistory={allBookmarksAndHistory} onAddBookmark={addBookmark} onDeleteBookmark={deleteBookmark} />;
+      case 'notebooks': return <NotebookView />;
+      case 'bookmarks': return <BookmarkView allBookmarksAndHistory={allBookmarksAndHistory} onAddBookmark={addBookmark} onDeleteBookmark={deleteBookmark} onAddToToolbox={addToolboxItem} />;
       case 'ai-notes': return <AiNotesView onAddMemo={addMemo} />;
-      case 'toolbox': return <ToolboxView />;
+      case 'toolbox': return <ToolboxView items={toolboxItems} onDelete={deleteToolboxItem} onEdit={updateToolboxItem} />;
       case 'full-calendar': return (
         <main className="main-content">
           <FullCalendarPage events={events} onAddEvent={addEvent} onEventClick={handleEventClick} />

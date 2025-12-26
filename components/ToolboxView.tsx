@@ -1,25 +1,155 @@
-import React from 'react';
+import React, { useState } from 'react';
+import type { ToolboxItem } from '../types';
+import { formatUrl } from '../utils';
+import { Trash2, Edit, ExternalLink } from 'lucide-react';
 
-// --- MOCK DATA & CONSTANTS ---
-const TOOLBOX_ITEMS = [
-    { title: "AI Code Assistant", description: "Boost your productivity with an AI pair programmer.", url: "https://github.com/features/copilot", icon: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M9.4 16.6 4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0 4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg> },
-    { title: "Image Generator", description: "Generate high-quality images from text prompts.", url: "https://www.midjourney.com/", icon: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg> },
-    { title: "Presentation Maker", description: "Create stunning presentations from a simple prompt.", url: "https://gamma.app/", icon: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M4 3h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm0 14h16v2H4v-2z"/></svg> },
-    { title: "AI Writing Assistant", description: "Grammar checking, style editing, and content generation.", url: "https://www.grammarly.com/", icon: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M17.66 4.93 16.24 6.34 9.22 13.36 7.8 11.95 6.39 13.36 9.22 16.19 17.65 7.75l1.41-1.41zM21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9c2.31 0 4.41.87 6 2.3l-1.42 1.42C14.53 5.67 12.86 5 11 5c-3.86 0-7 3.14-7 7s3.14 7 7 7 7-3.14 7-7h-2l3-4 3 4h-2z"/></svg> },
-    { title: "Diagramming Tool", description: "Create diagrams, wireframes, and flowcharts.", url: "https://www.figma.com/figjam/", icon: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M21 8c0-1.11-.89-2-2-2h-3V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H5c-1.11 0-2 .89-2 2v3H1v4c0 1.11.89 2 2 2h2v3c0 1.11.89 2 2 2h4c1.11 0 2-.89 2-2v-2h3c1.11 0 2-.89 2-2v-3h2v-4h-2V8z"/></svg> },
-    { title: "Video Summarizer", description: "Get summaries of long videos in seconds.", url: "https://www.summarize.tech/", icon: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M10 16.5v-9l6 4.5-6 4.5zM20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2z"/></svg> },
-];
+interface ToolboxViewProps {
+    items?: ToolboxItem[];
+    onDelete?: (id: number) => void;
+    onEdit?: (item: ToolboxItem) => void;
+}
 
-export const ToolboxView = () => (
-    <div className="page-container">
-        <h1>Toolbox</h1>
-        <div className="toolbox-grid">
-            {TOOLBOX_ITEMS.map(tool => (
-                <a key={tool.title} href={tool.url} target="_blank" rel="noopener noreferrer" className="tool-card">
-                    <div className="tool-card-header"><div className="tool-card-icon">{tool.icon}</div><span className="tool-card-title">{tool.title}</span></div>
-                    <p className="tool-card-description">{tool.description}</p>
-                </a>
-            ))} 
+export const ToolboxView = ({ items = [], onDelete, onEdit }: ToolboxViewProps) => {
+    const [editModalOpen, setEditModalOpen] = useState(false);
+    const [editingItem, setEditingItem] = useState<ToolboxItem | null>(null);
+
+    const handleEditClick = (item: ToolboxItem) => {
+        setEditingItem(item);
+        setEditModalOpen(true);
+    };
+
+    const handleSaveEdit = () => {
+        if (editingItem && onEdit) {
+            onEdit(editingItem);
+        }
+        setEditModalOpen(false);
+        setEditingItem(null);
+    };
+
+    const handleCancelEdit = () => {
+        setEditModalOpen(false);
+        setEditingItem(null);
+    };
+
+    return (
+        <div className="flex h-full w-full bg-background font-sans text-gray-300 overflow-hidden">
+            <div className="max-w-7xl mx-auto px-4 py-8 w-full">
+                <h1 className="text-3xl font-bold text-white mb-8 border-b border-white/5 pb-4 uppercase tracking-wider font-mono">
+                    <span className="text-techCyan">//</span> TOOLBOX_DASHBOARD
+                </h1>
+                
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 auto-rows-max">
+                    {items.map(item => (
+                        <div 
+                            key={item.id} 
+                            className="tech-panel relative group flex flex-col justify-between p-3 cursor-pointer h-56 w-full overflow-hidden" // Adjusted padding to p-3
+                        >
+                            {/* Controls (visible on hover) */}
+                            <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10"> {/* Adjusted gap to gap-1 */}
+                                {onEdit && (
+                                    <button 
+                                        className="tech-btn-secondary p-1" // Adjusted padding
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            handleEditClick(item);
+                                        }}
+                                        title="EDIT_TOOLBOX_ITEM"
+                                    >
+                                        <Edit size={14} /> {/* Smaller icon */}
+                                    </button>
+                                )}
+                                {onDelete && (
+                                    <button 
+                                        className="tech-btn-secondary p-1" // Adjusted padding
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            if(confirm('REMOVE_TOOLBOX_ITEM?')) onDelete(item.id);
+                                        }}
+                                        title="REMOVE_TOOLBOX_ITEM"
+                                    >
+                                        <Trash2 size={14} /> {/* Smaller icon */}
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Main Content Area - Clickable link */}
+                            <a href={item.url} target="_blank" rel="noreferrer" className="flex flex-col items-center flex-grow justify-center w-full h-full text-center"> {/* Removed explicit padding and negative margin */}
+                                {/* Icon / Image */}
+                                <div className="flex items-center justify-center w-full h-20 overflow-hidden mb-2 rounded bg-black/20 border border-white/10 group-hover:border-techCyan/50 transition-colors">
+                                    {item.imageUrl ? (
+                                        <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                                    ) : item.iconUrl ? (
+                                        <img src={item.iconUrl} alt={item.title} className="w-12 h-12 object-contain filter grayscale group-hover:grayscale-0 transition-all duration-300" />
+                                    ) : (
+                                        <div className="text-4xl text-gray-500">📦</div>
+                                    )}
+                                </div>
+
+                                {/* Title & URL */}
+                                <div className="w-full px-1">
+                                    <div className="text-sm font-semibold text-gray-200 truncate w-full font-mono">{item.title || formatUrl(item.url)}</div>
+                                    <div className="text-xs text-gray-500 truncate w-full font-mono mt-1 flex items-center justify-center gap-1">
+                                        <ExternalLink size={10} className="text-techOrange" />
+                                        {formatUrl(item.url)}
+                                    </div>
+                                </div>
+                            </a>
+
+                            {/* Meta info at bottom */}
+                            <div className="w-full text-center text-[10px] text-gray-600 font-mono mt-2">
+                                {item.timestamp ? new Date(item.timestamp).toLocaleString() : ''}
+                                {item.description && (
+                                    <p className="text-[9px] text-gray-700 truncate mt-1 px-1">{item.description}</p>
+                                )}
+                            </div>
+                        </div>
+                    ))}
+
+                    {/* Placeholder for empty state */}
+                    {items.length === 0 && (
+                        <div className="col-span-full tech-panel flex flex-col items-center justify-center py-16 text-gray-500 border-dashed border-gray-700">
+                            <div className="text-6xl mb-4 opacity-30 text-techCyan">🛠️</div>
+                            <h2 className="text-xl font-light text-gray-400 font-mono">TOOLBOX_EMPTY</h2>
+                            <p className="text-sm mt-2 opacity-60 font-mono">ADD_ITEMS_FROM_HISTORY_OR_BOOKMARKS_VIEW</p>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Edit Modal (Placeholder) */}
+            {editModalOpen && editingItem && (
+                <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+                    <div className="tech-panel p-8 w-full max-w-md">
+                        <h2 className="text-xl font-bold text-white mb-4">EDIT_TOOLBOX_ITEM</h2>
+                        <label className="block text-gray-400 text-sm mb-2">TITLE</label>
+                        <input
+                            type="text"
+                            className="tech-input w-full p-2 mb-4"
+                            value={editingItem.title}
+                            onChange={(e) => setEditingItem(prev => prev ? { ...prev, title: e.target.value } : null)}
+                        />
+                        <label className="block text-gray-400 text-sm mb-2">URL</label>
+                        <input
+                            type="text"
+                            className="tech-input w-full p-2 mb-4"
+                            value={editingItem.url}
+                            onChange={(e) => setEditingItem(prev => prev ? { ...prev, url: e.target.value } : null)}
+                        />
+                         <label className="block text-gray-400 text-sm mb-2">DESCRIPTION</label>
+                        <textarea
+                            className="tech-input w-full p-2 mb-4 h-24"
+                            value={editingItem.description}
+                            onChange={(e) => setEditingItem(prev => prev ? { ...prev, description: e.target.value } : null)}
+                        />
+                        <div className="flex justify-end gap-4 mt-4">
+                            <button className="tech-btn-secondary px-4 py-2" onClick={handleCancelEdit}>CANCEL</button>
+                            <button className="tech-btn px-4 py-2" onClick={handleSaveEdit}>SAVE</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
-    </div>
-);
+    );
+};
