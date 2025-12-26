@@ -13,7 +13,7 @@ const { searchAll } = require('./search');
 const { Ollama } = require('ollama'); 
 const aiRoutes = require('./ai_api');
 
-// --- NEW ROUTE IMPORTS ---
+// --- ROUTE IMPORTS ---
 const notebookRoutes = require('./notebooks_api');
 const identityRoutes = require('./identity_api');
 
@@ -58,7 +58,7 @@ const appDb = new sqlite3.Database(appDbPath, (err) => {
         if(err) console.warn("Could not enable WAL mode:", err);
     });
     
-    // Ensure any stuck transactions are rolled back on startup
+    // Safety: Rollback any stuck transactions from a previous crash
     appDb.run("ROLLBACK", () => {}); 
 
     appDb.serialize(() => {
@@ -68,7 +68,10 @@ const appDb = new sqlite3.Database(appDbPath, (err) => {
         appDb.run(`CREATE TABLE IF NOT EXISTS tasks (id TEXT PRIMARY KEY, content TEXT, quadrant TEXT, date TEXT, completed INTEGER DEFAULT 0)`);
         appDb.run(`CREATE TABLE IF NOT EXISTS notebooks (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, timestamp TEXT, blocks TEXT)`);
         appDb.run(`CREATE TABLE IF NOT EXISTS events (id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT, title TEXT, description TEXT, time TEXT, duration TEXT, link TEXT)`);
-        appDb.run(`CREATE TABLE IF NOT EXISTS history (id INTEGER PRIMARY KEY AUTOINCREMENT, url TEXT, title TEXT, visit_time TEXT, source TEXT)`); 
+        
+        // CHANGED: Using browser_history as requested
+        appDb.run(`CREATE TABLE IF NOT EXISTS browser_history (id INTEGER PRIMARY KEY AUTOINCREMENT, url TEXT, title TEXT, visit_time TEXT, source TEXT)`); 
+        
         appDb.run(`CREATE TABLE IF NOT EXISTS ai_conversations (id INTEGER PRIMARY KEY AUTOINCREMENT, timestamp TEXT, type TEXT, content TEXT, model TEXT)`); 
         
         // Identity & Credentials Tables
@@ -81,7 +84,7 @@ const appDb = new sqlite3.Database(appDbPath, (err) => {
         appDb.run("ALTER TABLE tasks ADD COLUMN completed INTEGER DEFAULT 0", (err) => {});
     });
     
-    // Task Migration Logic (Simplified for brevity, assuming established)
+    // Task Migration Logic
     appDb.serialize(() => {
         appDb.all("PRAGMA table_info(tasks)", (err, rows) => {
             if (!err && rows && !rows.some(r => r.name === 'date')) {
@@ -97,11 +100,10 @@ app.use('/uploads', express.static(UPLOAD_DIR));
 
 // --- MOUNT ROUTES ---
 app.use('/api/ai', aiRoutes(appDb, ollamaClient));
-app.use('/api/notebooks', notebookRoutes(appDb)); // Notebooks isolated
-app.use('/api', identityRoutes(appDb));           // Identities isolated
+app.use('/api/notebooks', notebookRoutes(appDb)); 
+app.use('/api', identityRoutes(appDb));
 
-// --- CORE ROUTES (Memos, Tasks, etc) ---
-// Keep these here or move to another file if needed, but Index is fine for generic stuff
+// --- CORE ROUTES ---
 
 const memoryStorage = multer.memoryStorage();
 const uploadMemory = multer({ storage: memoryStorage, limits: { fileSize: 10 * 1024 * 1024 } });
@@ -161,12 +163,21 @@ app.delete('/api/memos/:id', (req, res) => {
     });
 });
 
-// Bookmarks & History
+// Bookmarks
 app.get('/api/bookmarks', (req, res) => {
     appDb.all('SELECT * FROM bookmarks ORDER BY timestamp DESC', (err, rows) => res.json(err ? [] : rows));
 });
+
+// --- FIXED HISTORY ENDPOINT ---
 app.get('/api/history', (req, res) => {
-    appDb.all('SELECT * FROM history ORDER BY visit_time DESC LIMIT 2000', (err, rows) => res.json(err ? [] : rows));
+    // Explicitly querying browser_history as requested
+    appDb.all('SELECT * FROM browser_history ORDER BY visit_time DESC LIMIT 2000', (err, rows) => {
+        if (err) {
+            console.error("[API] Error fetching browser_history:", err.message);
+            return res.status(500).json([]);
+        }
+        res.json(rows);
+    });
 });
 
 // Tasks
@@ -176,7 +187,6 @@ app.get('/api/tasks', (req, res) => {
     appDb.all('SELECT id, content, quadrant, completed FROM tasks WHERE date = ?', [date], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         if (rows.length > 0) return res.json(rows);
-        // Fallback inheritance logic...
         appDb.get('SELECT date FROM tasks WHERE date < ? ORDER BY date DESC LIMIT 1', [date], (err, row) => {
             if (!row) return res.json([]);
             appDb.all('SELECT id, content, quadrant, completed FROM tasks WHERE date = ?', [row.date], (err, inherited) => {
@@ -235,9 +245,28 @@ app.put('/api/settings', (req, res) => {
     });
 });
 
-app.listen(PORT, () => {
-    console.log(`Server listening on port ${PORT}`);
-    if(browserImporter && browserImporter.performBrowserDataImport) {
-        browserImporter.startScheduledImport(appDb);
-    }
-});
+// --- SERVER STARTUP ---
+const startServer = () => {
+    app.listen(PORT, () => {
+        console.log(`Server listening on port ${PORT}`);
+        if(browserImporter && browserImporter.startScheduledImport) {
+            browserImporter.startScheduledImport(appDb);
+        }
+    });
+};
+
+// CRITICAL FIX: Ensure Import finishes before server starts to prevent DB Locked errors
+if(browserImporter && browserImporter.performBrowserDataImport) {
+    console.log('[Main] Running initial browser data import...');
+    browserImporter.performBrowserDataImport(appDb)
+        .then(() => {
+            console.log('[Main] Initial import completed.');
+            startServer();
+        })
+        .catch(err => {
+            console.error('[Main] Initial import encountered an error (continuing startup):', err);
+            startServer();
+        });
+} else {
+    startServer();
+}
