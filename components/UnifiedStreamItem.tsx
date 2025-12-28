@@ -66,7 +66,10 @@ export const UnifiedStreamItem = ({
                                 <div className="unified-dynamic-dots-before"></div>
                                 <div 
                                     className="unified-time-display" 
-                                    onClick={() => onTimestampClick(timestampMarker.timestamp)}
+                                    onClick={() => {
+                                        console.log('[UnifiedStreamItem] Timestamp clicked:', timestampMarker.timestamp);
+                                        onTimestampClick(timestampMarker.timestamp);
+                                    }}
                                     style={{ cursor: 'pointer' }}
                                 >
                                     {new Date(timestampMarker.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

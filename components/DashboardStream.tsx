@@ -136,7 +136,10 @@ const DashboardStreamComponent = (
                     onUpdateMemo={onUpdateMemo} 
                     onDeleteMemo={onDeleteMemo} 
                     onOpenImageEditor={onOpenImageEditor} 
-                    onTimestampClick={onTimestampClick}
+                    onTimestampClick={(time) => {
+                        console.log('[DashboardStream] onTimestampClick received:', time);
+                        onTimestampClick(time);
+                    }}
                     onAddToToolbox={onAddToToolbox}
                 />
             ))}

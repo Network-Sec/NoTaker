@@ -107,10 +107,10 @@ export const NotebookView = () => {
             {/* Main Editor Area */}
             <main className="flex-1 flex flex-col min-w-0 bg-background relative">
                 {selectedNotebook ? (
-                    <div className="flex flex-col h-full p-4 md:p-8 max-w-4xl mx-auto w-full"> {/* Reduced padding slightly */}
+                    <div className="flex flex-col h-full p-4 md:p-8 max-w-7xl mx-auto w-full"> {/* Reduced padding slightly */}
                         <input
                             type="text"
-                            className="tech-input text-4xl font-bold uppercase bg-transparent border-none text-white placeholder-gray-600 outline-none mb-6 w-full px-0 font-mono" // Added font-mono
+                            className="tech-input text-4xl p-4 bg-transparent border-none text-white mb-6" // Added font-mono
                             value={selectedNotebook.title}
                             onChange={e => updateNotebook(selectedNotebookId!, { title: e.target.value })}
                             placeholder="Untitled Notebook"

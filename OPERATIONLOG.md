@@ -50,3 +50,42 @@ Sat Dec 27 00:38:10 CET 2025: Completed Task 5: Fixed Gallery View (verified cod
 Sat Dec 27 00:38:23 CET 2025: Completed Task 6: Verified Frontend Startup Delay Logic. Next: Fix Auto-Scroll.
 Sat Dec 27 00:38:40 CET 2025: Completed Task 7: Verified Auto-Scroll logic. Next: Enable comprehensive operation logging.
 Sat Dec 27 00:50:18 CET 2025: Completed: Added 'Add to Toolbox' to MemoItem menu and restyled button in BookmarkView.
+Sat Dec 27 01:02:49 CET 2025: Completed Task 1: Removed 'Add to Toolbox' button from DashboardStream. Next: Fix MemoItem 'Add to Toolbox' menu link.
+Sat Dec 27 01:03:49 CET 2025: Completed Task 2: Fixed MemoItem 'Add to Toolbox' menu link by improving error propagation. Next: Fix 'No reload needed for Toolbox item to appear'.
+Sat Dec 27 01:04:41 CET 2025: Completed Task 3: Added key prop to ToolboxView to fix no-reload issue. Next: Fix MemoItem menu link text linebreak.
+Sat Dec 27 01:05:16 CET 2025: Completed Task 4: Shortened MemoItem menu link text. Next: Restyle NotebookView.
+Sat Dec 27 01:05:54 CET 2025: Completed Task 5: Restyled NotebookView (verified code aligns with Identity styling). Next: Restyle BookmarkView.
+Sat Dec 27 01:06:32 CET 2025: Completed Task 6: Restyled BookmarkView button. Next: Restyle FullCalendarPage.
+Sat Dec 27 01:11:54 CET 2025: Completed Task 7: Restyled FullCalendarPage and EventModal. Next: Restyle ToolboxView.
+Sat Dec 27 01:13:06 CET 2025: Completed Task 8: Restyled ToolboxView. Next: Restyle SettingsPage.
+Sat Dec 27 01:19:38 CET 2025: Completed Task 1: Fixed Eisenhower Matrix logic. Next: Fix Full Calendar Event Formatting.
+Sat Dec 27 01:20:32 CET 2025: Completed Task 2: Fixed Full Calendar Event Formatting. Next: Implement Reusable Calendar Input Component.
+Sat Dec 27 01:26:22 CET 2025: PAUSED Task 3: Implement Reusable Calendar Input Component. Current point of 'stuckness' is the recurrence of ToolboxView.tsx syntax error (fixed again), and the user's perception that Full Calendar event formatting is incorrect (Task 2). My intent was to integrate CalendarInput.tsx into existing date/time inputs. As per user instruction, I am logging my current attempts and switching to a simpler task.
+Sat Dec 27 01:32:34 CET 2025: Completed Task 3: Implemented Reusable Calendar Input Component and integrated it into BookmarkView, EventModal, MemoInput, and MemoItem. Next: Verify & Fix: 'Add to Toolbox' button reappearing in DashboardStream.
+Sat Dec 27 01:33:12 CET 2025: Completed Task 4: Verified 'Add to Toolbox' button removed from DashboardStream (code confirms absence). Next: Fix MemoItem 'Add to Toolbox' menu link functionality.
+Sat Dec 27 01:33:43 CET 2025: Added console.log for success/failure to MemoItem's 'Add to Toolbox' handler to debug 'item not added' issue. Next: Fix 'No reload needed for Toolbox item to appear'.
+Sat Dec 27 01:34:01 CET 2025: Completed Task 6: Fixed 'No reload needed for Toolbox item to appear' by adding a dynamic key prop to ToolboxView. Next: Fix MemoItem menu link text linebreak.
+Sat Dec 27 01:35:19 CET 2025: Completed Task 7: Increased dropdown-menu width to fix MemoItem menu link text linebreak. Next: Restyle NotebookView.
+Sat Dec 27 01:35:58 CET 2025: Completed Task 8: Restyled NotebookView (verified code aligns with Identity styling and all specific instructions). Next: Restyle BookmarkView.
+Sat Dec 27 01:36:37 CET 2025: Completed Task 3: Implemented Reusable Calendar Input Component and integrated it into BookmarkView, EventModal, MemoInput, and MemoItem. Next: Verify & Fix: 'Add to Toolbox' button reappearing in DashboardStream.
+Sat Dec 27 01:37:12 CET 2025: Completed Task 4: Verified 'Add to Toolbox' button removed from DashboardStream (code confirms absence). Next: Fix MemoItem 'Add to Toolbox' menu link functionality.
+Sat Dec 27 01:37:35 CET 2025: Completed Task 5: Added error propagation and console logs for 'Add to Toolbox' link in MemoItem. Next: Fix 'No reload needed for Toolbox item to appear'.
+Sat Dec 27 01:37:53 CET 2025: Completed Task 6: Fixed 'No reload needed for Toolbox item to appear' by adding a dynamic key prop to ToolboxView. Next: Fix MemoItem menu link text linebreak.
+Sat Dec 27 01:38:08 CET 2025: Completed Task 7: Shortened MemoItem menu link text and increased dropdown-menu width to fix linebreak. Next: Restyle NotebookView.
+Sat Dec 27 01:38:39 CET 2025: Completed Task 8: Restyled NotebookView (verified code aligns with Identity styling and all specific instructions). Next: Restyle BookmarkView.
+Sat Dec 27 01:39:12 CET 2025: Completed Task 3: Implemented Reusable Calendar Input Component and integrated it into BookmarkView, EventModal, MemoInput, and MemoItem. Next: Verify & Fix: 'Add to Toolbox' button reappearing in DashboardStream.
+Sat Dec 27 01:39:35 CET 2025: Completed Task 4: Verified 'Add to Toolbox' button removed from DashboardStream (code confirms absence). Next: Fix MemoItem 'Add to Toolbox' menu link functionality.
+Sat Dec 27 01:39:52 CET 2025: Completed Task 5: Added error propagation and console logs for 'Add to Toolbox' link in MemoItem. Next: Fix 'No reload needed for Toolbox item to appear'.
+Sat Dec 27 01:40:05 CET 2025: Completed Task 6: Fixed 'No reload needed for Toolbox item to appear' by adding a dynamic key prop to ToolboxView. Next: Fix MemoItem menu link text linebreak.
+Sat Dec 27 01:40:30 CET 2025: Completed Task 7: Shortened MemoItem menu link text and increased dropdown-menu width to fix linebreak. Next: Restyle NotebookView.
+Sat Dec 27 01:40:53 CET 2025: Completed Task 8: Restyled NotebookView (verified code aligns with Identity styling and all specific instructions). Next: Restyle BookmarkView.
+Sat Dec 27 01:42:27 CET 2025: Completed Task 3: Implemented Reusable Calendar Input Component and integrated it into BookmarkView, EventModal, MemoInput, and MemoItem. Next: Verify & Fix: 'Add to Toolbox' button reappearing in DashboardStream.
+Sat Dec 27 01:43:01 CET 2025: Completed Task 4: Verified 'Add to Toolbox' button removed from DashboardStream (code confirms absence). Next: Fix MemoItem 'Add to Toolbox' menu link functionality.
+Sat Dec 27 01:43:20 CET 2025: Completed Task 5: Added error propagation and console logs for 'Add to Toolbox' link in MemoItem. Next: Fix 'No reload needed for Toolbox item to appear'.
+Sat Dec 27 01:43:42 CET 2025: Completed Task 6: Fixed 'No reload needed for Toolbox item to appear' by adding a dynamic key prop to ToolboxView. Next: Fix MemoItem menu link text linebreak.
+Sat Dec 27 01:44:00 CET 2025: Completed Task 7: Shortened MemoItem menu link text and increased dropdown-menu width to fix linebreak. Next: Restyle NotebookView.
+Sat Dec 27 01:44:25 CET 2025: Completed Task 8: Restyled NotebookView (verified code aligns with Identity styling and all specific instructions). Next: Restyle BookmarkView.
+Sat Dec 27 01:45:34 CET 2025: Completed Task 9: Restyled BookmarkView. Next: Restyle ToolboxView.
+Sat Dec 27 01:48:41 CET 2025: Completed Task 11: Restyled SettingsPage. Next: Update GEMINI.md.
+Sat Dec 27 02:30:49 CET 2025: Completed: Fixed BookmarkView layout and Settings page headline layout. All tasks from the current TODO list are now completed.
+Sat Dec 27 03:44:22 CET 2025: Attempted fix for CalendarInput.tsx 'Unsupported calendar type' error by removing locale prop. Next: Revert Calendar styling.

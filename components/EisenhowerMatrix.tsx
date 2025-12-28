@@ -8,14 +8,15 @@ const QUADRANT_MAP: Record<EisenhowerQuadrant, string> = {
     'unimportant-not-urgent': 'Unimportant & Not Urgent'
 }; 
 
-const Quadrant = ({ quadrant, tasks, onAddTask, onUpdateTask, onDeleteTask, onDrop, onToggleTaskCompleted }: {
+const Quadrant = ({ quadrant, tasks, onAddTask, onUpdateTask, onDeleteTask, onDrop, onToggleTaskCompleted, selectedDate }: { // Added selectedDate
     quadrant: EisenhowerQuadrant,
     tasks: Task[],
     onAddTask: (content: string, quadrant: EisenhowerQuadrant) => void,
-    onUpdateTask: (id: string, content: string) => void,
-    onDeleteTask: (id: string) => void,
+    onUpdateTask: (task: Task) => void, // Changed signature
+    onDeleteTask: (task: Task) => void, // Changed signature
     onDrop: (e: DragEvent<HTMLDivElement>, quadrant: EisenhowerQuadrant) => void,
-    onToggleTaskCompleted: (id: string) => void // New prop
+    onToggleTaskCompleted: (id: string) => void,
+    selectedDate: Date, // Added selectedDate
 }) => {
     const [newTaskContent, setNewTaskContent] = useState('');
     const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
@@ -33,9 +34,9 @@ const Quadrant = ({ quadrant, tasks, onAddTask, onUpdateTask, onDeleteTask, onDr
         setEditedTaskContent(task.content);
     };
 
-    const handleSaveEditedTask = (id: string) => {
+    const handleSaveEditedTask = (task: Task) => { // Takes task instead of id
         if (editedTaskContent.trim()) {
-            onUpdateTask(id, editedTaskContent.trim());
+            onUpdateTask({ ...task, content: editedTaskContent.trim() }); // Pass full task object
             setEditingTaskId(null);
         }
     };
@@ -65,7 +66,7 @@ const Quadrant = ({ quadrant, tasks, onAddTask, onUpdateTask, onDeleteTask, onDr
                                 type="text"
                                 value={editedTaskContent}
                                 onChange={(e) => setEditedTaskContent(e.target.value)}
-                                onBlur={() => handleSaveEditedTask(task.id)}
+                                onBlur={() => handleSaveEditedTask(task)} // Pass full task
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter') {
                                         e.currentTarget.blur(); // Trigger onBlur
@@ -79,7 +80,7 @@ const Quadrant = ({ quadrant, tasks, onAddTask, onUpdateTask, onDeleteTask, onDr
                         ) : (
                             <span onDoubleClick={() => handleEditTask(task)}>{task.content}</span>
                         )}
-                        <button className="delete-task-btn" onClick={() => onDeleteTask(task.id)}>&#x2715;</button> {/* X mark */}
+                        <button className="delete-task-btn" onClick={() => onDeleteTask(task)}>&#x2715;</button> {/* Pass full task */}
                     </li>
                 ))}
             </ul>
@@ -99,13 +100,14 @@ const Quadrant = ({ quadrant, tasks, onAddTask, onUpdateTask, onDeleteTask, onDr
 interface EisenhowerMatrixProps {
     tasks: Task[];
     onAddTask: (content: string, quadrant: EisenhowerQuadrant) => void;
-    onUpdateTask: (id: string, content: string) => void;
-    onMoveTask: (id: string, newQuadrant: EisenhowerQuadrant) => void;
-    onDeleteTask: (id: string) => void;
-    onToggleTaskCompleted: (id: string) => void; // New prop
+    onUpdateTask: (task: Task) => void; // Changed signature
+    onMoveTask: (task: Task) => void; // Changed signature
+    onDeleteTask: (task: Task) => void; // Changed signature
+    onToggleTaskCompleted: (id: string) => void;
+    selectedDate: Date; // Added selectedDate
 }
 
-export const EisenhowerMatrix = ({ tasks, onAddTask, onUpdateTask, onMoveTask, onDeleteTask, onToggleTaskCompleted }: EisenhowerMatrixProps) => {
+export const EisenhowerMatrix = ({ tasks, onAddTask, onUpdateTask, onMoveTask, onDeleteTask, onToggleTaskCompleted, selectedDate }: EisenhowerMatrixProps) => { // Accept selectedDate
     const quadrants = useMemo<Record<EisenhowerQuadrant, Task[]>>(() => {
         return {
             'important-urgent': tasks.filter(t => t.quadrant === 'important-urgent'),
@@ -127,8 +129,9 @@ export const EisenhowerMatrix = ({ tasks, onAddTask, onUpdateTask, onMoveTask, o
                         onAddTask={onAddTask}
                         onUpdateTask={onUpdateTask}
                         onDeleteTask={onDeleteTask}
-                        onDrop={() => {}}
-                        onToggleTaskCompleted={onToggleTaskCompleted} // Pass new prop
+                        onDrop={() => {}} // Drag/Drop not implemented yet
+                        onToggleTaskCompleted={onToggleTaskCompleted}
+                        selectedDate={selectedDate} // Pass selectedDate
                     />
                 ))}
             </div>

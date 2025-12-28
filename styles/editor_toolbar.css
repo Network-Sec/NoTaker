@@ -24,7 +24,6 @@
   /* --- Layout Essentials (From Original) --- */
   display: flex;
   flex-direction: column;
-  position: relative;
   width: 100%;
   max-width: 750px;
   padding: 10px 20px;

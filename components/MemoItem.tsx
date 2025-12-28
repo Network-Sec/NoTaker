@@ -5,6 +5,8 @@ import { Memo } from '../types';
 import { CodeBlock } from './CodeBlock';
 import { getTagColor } from '../utils/tagUtils';
 import { LinkPreview } from './LinkPreview';
+import CalendarInput from './CalendarInput'; // Import CalendarInput
+import moment from 'moment'; // Import moment
 
 const YOUTUBE_URL_REGEX = /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/))([^&\n?#]+)/;
 
@@ -189,8 +191,16 @@ export const MemoItem = ({ memo, onTagSelect, onUpdateMemo, onDeleteMemo, onOpen
                                 <button onClick={() => { onOpenImageEditor(memo); setShowMenu(false); }}>✂️ Crop/Edit Image</button>
                             )}
                             {memo.type === 'link' && onAddToToolbox && ( // New menu item for links
-                                <button onClick={() => { onAddToToolbox({ url: memo.content, title: memo.title || memo.content }); setShowMenu(false); }}>
-                                    ➕ Add to Toolbox
+                                <button onClick={async () => {
+                                    setShowMenu(false);
+                                    try {
+                                        await onAddToToolbox({ url: memo.content, title: memo.title || memo.content });
+                                        console.log("Toolbox item added successfully from MemoItem."); // Log success
+                                    } catch (error) {
+                                        console.error("Failed to add to Toolbox from MemoItem:", error); // Log failure
+                                    }
+                                }}>
+                                    ➕ To Toolbox
                                 </button>
                             )}
                             <div className="divider" />
@@ -201,11 +211,11 @@ export const MemoItem = ({ memo, onTagSelect, onUpdateMemo, onDeleteMemo, onOpen
             </div>
 
                         {isEditingTime ? (
-                            <div className="memo-edit-time-container">
-                                <input type="time" value={editedTime} onChange={e => setEditedTime(e.target.value)} />
-                                <div className="memo-edit-buttons">
-                                    <button onClick={handleSaveTime} className="btn-primary">Save Time</button>
-                                    <button onClick={() => setIsEditingTime(false)} className="btn-secondary">Cancel</button>
+                            <div className="memo-edit-time-container flex flex-col gap-2 p-4 tech-panel"> {/* Restyled container */}
+                                <CalendarInput mode="time" value={editedTime ? moment(editedTime, 'HH:mm').toDate() : null} onChange={date => setEditedTime(date ? moment(date).format('HH:mm') : '')} label="Edit Time:" />
+                                <div className="flex justify-end gap-2 mt-2">
+                                    <button onClick={handleSaveTime} className="tech-btn px-3 py-1">SAVE_TIME</button>
+                                    <button onClick={() => setIsEditingTime(false)} className="tech-btn-secondary px-3 py-1">CANCEL</button>
                                 </div>
                             </div>
                         ) : isEditing ? (

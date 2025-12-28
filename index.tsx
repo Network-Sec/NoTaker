@@ -30,6 +30,7 @@ import { AIConversationStream } from './components/AIConversationStream'; // New
 import { AIInput } from './components/AIInput'; // New AI Input Component
 import { IdentityOverview } from './components/IdentityOverview'; // New IdentityOverview Component
 import type { AIConversationItem } from './types'; // Import AI Conversation Item Type
+import { DailyCounter } from './components/DailyCounter'; // Import DailyCounter
 
 const App = () => {
   const [mainView, setMainView] = useState<MainView>('dashboard');
@@ -61,6 +62,7 @@ const App = () => {
   const prevSelectedDateRef = useRef<Date | null>(null);
   const prevMemosLength = useRef(0); // Add this ref
   const initialScrollDoneRef = useRef(false); // New ref for initial scroll
+  const SEARCH_BAR_HEIGHT_OFFSET = 100;
 
   // Effect to keep track of the previous selectedDate
   useEffect(() => {
@@ -287,11 +289,11 @@ const App = () => {
   const addToolboxItem = useCallback(async (item: { url: string; title?: string }) => {
       try {
           const newItem = await db.createToolboxItem(item);
-          setToolboxItems(prev => [newItem, ...prev]);
-      } catch (e) { 
-          console.error(e); 
-      }
-  }, []);
+                    setToolboxItems(prev => [newItem, ...prev]);
+                } catch (e) {
+                    console.error("Error in addToolboxItem:", e); 
+                    throw e; // Re-throw the error so MemoItem can catch it
+                }  }, []);
 
   const deleteToolboxItem = useCallback(async (id: number) => {
       if(window.confirm('Are you sure you want to delete this tool?')) {
@@ -352,25 +354,19 @@ const App = () => {
     });
   }, [selectedDate]);
 
-  const updateTask = useCallback((id: string, c: string) => {
+  const updateTask = useCallback((updatedTask: Task) => {
     setTasks(prev => {
-      const newTasks = prev.map(t => t.id === id ? {...t, content:c}:t);
-      const year = selectedDate.getFullYear();
-      const month = (selectedDate.getMonth() + 1).toString().padStart(2, '0');
-      const day = selectedDate.getDate().toString().padStart(2, '0');
-      const dateString = `${year}-${month}-${day}`;
+      const newTasks = prev.map(t => t.id === updatedTask.id ? updatedTask : t);
+      const dateString = selectedDate.toISOString().split('T')[0];
       console.log(`[Frontend] updateTask called for ${dateString}. Saving tasks:`, newTasks);
       db.saveTasks(dateString, newTasks); // Explicit save
       return newTasks;
     });
   }, [selectedDate]);
-  const moveTask = useCallback((id: string, q: EisenhowerQuadrant) => {
+  const moveTask = useCallback((updatedTask: Task) => {
     setTasks(prev => {
-      const newTasks = prev.map(t => t.id === id ? {...t, quadrant:q}:t);
-      const year = selectedDate.getFullYear();
-      const month = (selectedDate.getMonth() + 1).toString().padStart(2, '0');
-      const day = selectedDate.getDate().toString().padStart(2, '0');
-      const dateString = `${year}-${month}-${day}`;
+      const newTasks = prev.map(t => t.id === updatedTask.id ? updatedTask : t);
+      const dateString = selectedDate.toISOString().split('T')[0];
       console.log(`[Frontend] moveTask called for ${dateString}. Saving tasks:`, newTasks);
       db.saveTasks(dateString, newTasks); // Explicit save
       return newTasks;
@@ -378,13 +374,12 @@ const App = () => {
   }, [selectedDate]);
   const deleteTask = useCallback((id: string) => {
     setTasks(prev => {
-      const newTasks = prev.filter(t => t.id !== id);
-      const year = selectedDate.getFullYear();
-      const month = (selectedDate.getMonth() + 1).toString().padStart(2, '0');
-      const day = selectedDate.getDate().toString().padStart(2, '0');
-      const dateString = `${year}-${month}-${day}`;
-      console.log(`[Frontend] deleteTask called for ${dateString}. Filtering out ID: ${id}. Remaining tasks:`, newTasks);
-      db.saveTasks(dateString, newTasks); // Explicit save
+      const dateString = selectedDate.toISOString().split('T')[0];
+      const newTasks = prev.map(t =>
+        t.id === id ? { ...t, deletedOn: dateString } : t
+      );
+      console.log(`[Frontend] deleteTask called for ${dateString}. Marking task ID ${id} as deleted. Saving tasks:`, newTasks);
+      db.saveTasks(dateString, newTasks); // Explicit save with deletedOn
       return newTasks;
     });
   }, [selectedDate]);
@@ -412,10 +407,11 @@ const App = () => {
                 <EisenhowerMatrix 
                     tasks={tasks} 
                     onAddTask={addTask} 
-                    onUpdateTask={updateTask} 
-                    onMoveTask={moveTask} 
-                    onDeleteTask={deleteTask}
-                    onToggleTaskCompleted={toggleTaskCompleted} // New prop
+                    onUpdateTask={task => updateTask(task)} 
+                    onMoveTask={task => moveTask(task)} 
+                    onDeleteTask={task => deleteTask(task)}
+                    onToggleTaskCompleted={toggleTaskCompleted} 
+                    selectedDate={selectedDate} 
                 />
                 <SidebarCalendarWidget 
                     events={events} 
@@ -424,6 +420,7 @@ const App = () => {
                     onEventClick={handleEventClick}
                 />
                 <QuickScrollButtons streamRef={dashboardStreamRef} />
+                <DailyCounter />
             </aside>
             <main className="main-content">
                   <GlobalSearchBar 
@@ -439,8 +436,11 @@ const App = () => {
                                               memos={memos} bookmarks={bookmarks} history={history} 
                                               onTagSelect={handleTagSelect} selectedDate={selectedDate} 
                                               onUpdateMemo={updateMemo} onDeleteMemo={deleteMemo} onOpenImageEditor={handleOpenImageEditor}
-                                              onTimestampClick={(time) => { setNewMemoTimestamp(time); setContinueTimestamp(true); }}
-                                              onAddToToolbox={addToolboxItem}
+                                              onTimestampClick={(time) => { 
+                                                console.log('[index.tsx] onTimestampClick received:', time);
+                                                setNewMemoTimestamp(time); 
+                                                setContinueTimestamp(true); 
+                                              }}
                                             />
                       <MemoInput 
                         onAddMemo={addMemo} 
@@ -476,7 +476,7 @@ const App = () => {
       case 'notebooks': return <NotebookView />;
       case 'bookmarks': return <BookmarkView allBookmarksAndHistory={allBookmarksAndHistory} onAddBookmark={addBookmark} onDeleteBookmark={deleteBookmark} onAddToToolbox={addToolboxItem} />;
       case 'ai-notes': return <AiNotesView onAddMemo={addMemo} />;
-      case 'toolbox': return <ToolboxView items={toolboxItems} onDelete={deleteToolboxItem} onEdit={updateToolboxItem} />;
+      case 'toolbox': return <ToolboxView key={toolboxItems.length} items={toolboxItems} onDelete={deleteToolboxItem} onEdit={updateToolboxItem} />;
       case 'full-calendar': return (
         <main className="main-content">
           <FullCalendarPage events={events} onAddEvent={addEvent} onEventClick={handleEventClick} />
@@ -502,9 +502,11 @@ const App = () => {
   };
 
   return (
-    <>
+    <div className="flex h-full w-full"> {/* New flex container */}
       <IconSidebar mainView={mainView} setMainView={setMainView} />
-      {renderMainView()}
+      <main className="flex-grow overflow-hidden"> {/* main tag to take remaining space, overflow-hidden for good measure */}
+        {renderMainView()}
+      </main>
       {editingMemo && <ImageEditorModal memo={editingMemo} onSave={handleSaveCroppedImage} onClose={handleCloseImageEditor} />}
       <EventModal
         isOpen={isEventModalOpen}
@@ -515,13 +517,13 @@ const App = () => {
       />
       {/* <SettingsModal 
         isOpen={isSettingsModalOpen} 
-        onClose={() => setIsSettingsModalOpen(false)} 
+        onClose={() => setIsSettingsModal(false)} 
         importInterval={30} 
         onImportIntervalChange={handleImportIntervalChange} 
         browserPathsConfig={{}} 
         onBrowserPathsConfigChange={handleBrowserPathsConfigChange} 
       /> */ /* REMOVED */}
-    </>
+    </div>
   );
 };
 

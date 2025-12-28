@@ -13,10 +13,13 @@ const { searchAll } = require('./search');
 const { Ollama } = require('ollama'); 
 const aiRoutes = require('./ai_api');
 const { startBackupService } = require('./backup_service');
+const setupSettingsRoutes = require('./settings_api');
 
 // --- ROUTE IMPORTS ---
 const notebookRoutes = require('./notebooks_api');
 const identityRoutes = require('./identity_api');
+const setupCalendarRoutes = require('./calendar_api');
+const setupDailyCounterRoutes = require('./daily_counter_api'); // New
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -58,7 +61,7 @@ const appDb = new sqlite3.Database(appDbPath, (err) => {
     appDb.run("PRAGMA journal_mode = WAL;", (err) => {
         if(err) console.warn("Could not enable WAL mode:", err);
     });
-    
+     
     // Safety: Rollback any stuck transactions from a previous crash
     appDb.run("ROLLBACK", () => {}); 
 
@@ -87,6 +90,9 @@ const appDb = new sqlite3.Database(appDbPath, (err) => {
         appDb.run("ALTER TABLE memos ADD COLUMN link_preview TEXT", (err) => {});
         appDb.run("ALTER TABLE bookmarks ADD COLUMN source TEXT", (err) => {});
         appDb.run("ALTER TABLE tasks ADD COLUMN completed INTEGER DEFAULT 0", (err) => {});
+        appDb.run("ALTER TABLE tasks ADD COLUMN deleted_on TEXT", (err) => {
+            if (err && !err.message.includes('duplicate column name')) console.error("Error altering tasks table to add deleted_on:", err);
+        });
     });
     
     // Task Migration Logic
@@ -110,6 +116,9 @@ app.use('/uploads', express.static(UPLOAD_DIR));
 app.use('/api/ai', aiRoutes(appDb, ollamaClient));
 app.use('/api/notebooks', notebookRoutes(appDb)); 
 app.use('/api', identityRoutes(appDb));
+setupCalendarRoutes(app, appDb);
+setupDailyCounterRoutes(app, appDb); // New
+setupSettingsRoutes(app);
 
 // Toolbox
 app.get('/api/toolbox', (req, res) => {
@@ -244,6 +253,18 @@ app.get('/api/tasks', (req, res) => {
     const { date } = req.query;
     if (!date) return res.status(400).json({ error: 'Date required' });
 
+    // Function to filter tasks based on deleted_on logic
+    const filterTasks = (tasks, forDate) => {
+        const queryDate = new Date(forDate);
+        return tasks.filter(task => {
+            if (task.deleted_on) {
+                const deletedOnDate = new Date(task.deleted_on);
+                return queryDate < deletedOnDate; // Keep task if queryDate is before deletedOnDate
+            }
+            return true; // Keep task if not deleted
+        });
+    };
+
     // Step 1: Check if this date has an explicitly empty task state
     appDb.get('SELECT is_explicitly_empty FROM task_day_states WHERE date = ?', [date], (err, dayState) => {
         if (err) {
@@ -257,18 +278,26 @@ app.get('/api/tasks', (req, res) => {
         }
 
         // Step 2: If not explicitly empty, check for tasks directly for this date
-        appDb.all('SELECT id, content, quadrant, completed FROM tasks WHERE date = ?', [date], (err, rows) => {
+        appDb.all('SELECT id, content, quadrant, completed, deleted_on FROM tasks WHERE date = ?', [date], (err, rows) => {
             if (err) {
                 console.error(`[Backend] Error fetching tasks for date ${date}:`, err.message);
                 return res.status(500).json({ error: err.message });
             }
-            if (rows.length > 0) {
-                console.log(`[Backend] Found ${rows.length} tasks for date ${date}.`);
-                return res.json(rows); // If tasks exist for date, return them
+            const filteredRows = filterTasks(rows, date);
+            if (filteredRows.length > 0) {
+                console.log(`[Backend] Found ${filteredRows.length} tasks for date ${date}.`);
+                return res.json(filteredRows); // If tasks exist for date, return them
             }
             
             // Step 3: If no tasks for this date (and not explicitly empty), inherit from the most recent previous day
-            appDb.get('SELECT date FROM tasks WHERE date < ? ORDER BY date DESC LIMIT 1', [date], (err, row) => {
+            // Only inherit from a day that has tasks that are not marked as deleted for the current 'date'
+            const inheritQuery = `
+                SELECT date FROM tasks 
+                WHERE date < ? 
+                AND (deleted_on IS NULL OR deleted_on > ?) 
+                ORDER BY date DESC LIMIT 1
+            `;
+            appDb.get(inheritQuery, [date, date], (err, row) => {
                 if (err) {
                     console.error(`[Backend] Error fetching previous day for inheritance for date ${date}:`, err.message);
                     return res.status(500).json({ error: err.message });
@@ -277,13 +306,15 @@ app.get('/api/tasks', (req, res) => {
                     console.log(`[Backend] No previous tasks to inherit for date ${date}.`);
                     return res.json([]); // No prior tasks, return empty
                 }
-                appDb.all('SELECT id, content, quadrant, completed FROM tasks WHERE date = ?', [row.date], (err, inherited) => {
+                // Inherit tasks from most recent previous day, applying deletion filter
+                appDb.all('SELECT id, content, quadrant, completed, deleted_on FROM tasks WHERE date = ?', [row.date], (err, inherited) => {
                     if (err) {
                         console.error(`[Backend] Error inheriting tasks from ${row.date} for date ${date}:`, err.message);
                         return res.status(500).json({ error: err.message });
                     }
-                    console.log(`[Backend] Inherited ${inherited.length} tasks from ${row.date} for date ${date}.`);
-                    res.json(inherited); // Return tasks from most recent previous day
+                    const filteredInherited = filterTasks(inherited, date);
+                    console.log(`[Backend] Inherited ${filteredInherited.length} tasks from ${row.date} for date ${date}.`);
+                    res.json(filteredInherited); // Return tasks from most recent previous day
                 });
             });
         });
@@ -322,8 +353,8 @@ app.post('/api/tasks', (req, res) => {
                 }
                 
                 // Step 3: Insert or replace new tasks for this date
-                const stmt = appDb.prepare('INSERT OR REPLACE INTO tasks (id, content, quadrant, date, completed) VALUES (?, ?, ?, ?, ?)');
-                tasks.forEach(t => stmt.run(t.id, t.content, t.quadrant, date, t.completed ? 1 : 0));
+                const stmt = appDb.prepare('INSERT OR REPLACE INTO tasks (id, content, quadrant, date, completed, deleted_on) VALUES (?, ?, ?, ?, ?, ?)');
+                tasks.forEach(t => stmt.run(t.id, t.content, t.quadrant, date, t.completed ? 1 : 0, t.deletedOn || null));
                 stmt.finalize(function(err) {
                     if (err) {
                         console.error(`[Backend] Error inserting tasks for date ${date}:`, err.message);
@@ -359,21 +390,6 @@ app.get('/api/graph-data', async (req, res) => {
 });
 app.get('/api/search', async (req, res) => {
     try { res.json(await searchAll(appDb, req.query.q)); } catch (e) { res.status(500).json({}); }
-});
-
-// Settings
-const SETTINGS_FILE = path.join(__dirname, 'settings.json');
-app.get('/api/settings', (req, res) => {
-    fs.readFile(SETTINGS_FILE, 'utf8', (err, data) => {
-        if (err) return res.json({ firefox: {}, chrome: {}, ai: {}, general: { importInterval: 30 }, generic: {} });
-        try { res.json(JSON.parse(data)); } catch (e) { res.status(500).json({}); }
-    });
-});
-app.put('/api/settings', (req, res) => {
-    fs.writeFile(SETTINGS_FILE, JSON.stringify(req.body, null, 2), 'utf8', (err) => {
-        if (err) return res.status(500).json({ error: 'Failed' });
-        res.json({ message: 'Saved' });
-    });
 });
 
 // --- SERVER STARTUP ---

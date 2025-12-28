@@ -52,6 +52,7 @@ export interface Task {
     quadrant: 'do' | 'decide' | 'delegate' | 'delete';
     date: string;
     completed: boolean;
+    deletedOn?: string; // New field to mark task as deleted from this date forward
 }
 
 export interface Event {

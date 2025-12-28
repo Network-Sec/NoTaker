@@ -6,6 +6,8 @@ import { useEditorFormatting } from './useEditorFormatting';
 import { getServerUrl } from '../utils';
 import * as db from '../services/db'; 
 import { generateAutoTags, getTagColor } from '../utils/tagUtils';
+import CalendarInput from './CalendarInput'; // Import CalendarInput
+import moment from 'moment'; // Import moment
 
 const API_URL = getServerUrl();
 
@@ -35,6 +37,7 @@ export const MemoInput = ({
     onContinueTimestampChange: (value: boolean) => void,
     onUpdateMemoLinkPreview: (memoId: number, linkPreview: db.LinkPreviewData) => void
 }) => {
+  console.log('[MemoInput] Received timestamp prop:', timestamp);
   const [blocks, setBlocks] = useState<Block[]>([INITIAL_BLOCK]);
   const [tags, setTags] = useState<string[]>([]);
   const [autoTags, setAutoTags] = useState<string[]>([]);
@@ -54,7 +57,7 @@ export const MemoInput = ({
     }
   }, [continueTimestamp, onTimestampChange]);
 
-  const formattedTime = new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+  // const formattedTime = new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -269,15 +272,26 @@ export const MemoInput = ({
     <div className="memo-input-container">
       <div className="memo-input-wrapper" onKeyDown={handleKeyDown} onPaste={handlePaste}>
         <div className="editor-toolbar">
-            <div className="time-controls">
-                <input type="time" value={formattedTime} readOnly />
-                <label>
+            <div className="time-controls flex items-center gap-2"> {/* Added flex and gap */}
+                <CalendarInput 
+                    mode="time" 
+                    value={timestamp ? moment(timestamp).toDate() : null} 
+                    onChange={(date) => {
+                        const newTimestamp = date ? date.toISOString() : new Date().toISOString();
+                        console.log('[MemoInput] CalendarInput onChange called, new timestamp:', newTimestamp);
+                        onTimestampChange(newTimestamp);
+                    }} 
+                    placeholder="Current Time" 
+                    hideIcon={true} // Hide the clock icon
+                />
+                <label className="flex items-center gap-1 text-sm text-gray-400 font-mono"> {/* Styled label */}
                     <input 
                         type="checkbox" 
                         checked={continueTimestamp} 
                         onChange={(e) => onContinueTimestampChange(e.target.checked)} 
+                        className="form-checkbox h-4 w-4 text-techCyan transition duration-150 ease-in-out border-gray-600 rounded bg-gray-800" // Styled checkbox
                     />
-                    Continue
+                    CONTINUE
                 </label>
             </div>
             <button className={activeFormats.isBold ? 'active' : ''} onClick={() => applyFormat('bold')} title="Bold">B</button>

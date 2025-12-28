@@ -1,42 +1,88 @@
 /* styles/monthly_calendar.css */
 
-.monthly-calendar-container {
-    padding: 10px;
-    height: 100%; /* Make container take full height */
-    width: 100%; /* Make container take full width */
-    background-color: var(--sidebar-bg-color); /* Assuming a sidebar background */
-    border-radius: 8px;
-    box-shadow: var(--shadow-sm);
+/* Revert/Override any generic calendar styles if needed */
+
+.react-calendar-mini {
+    width: 100%;
+    background: transparent;
+    border: none;
+    font-family: inherit;
+    color: #e5e7eb;
+}
+
+.react-calendar-mini button {
+    color: #e5e7eb;
+}
+
+.react-calendar-mini .react-calendar__navigation {
+    display: flex;
+    height: 44px;
+    margin-bottom: 0;
+}
+
+.react-calendar-mini .react-calendar__navigation button {
+    min-width: 44px;
+    background: none;
+    font-size: 14px;
+    font-weight: bold;
+    color: #9ca3af;
+}
+
+.react-calendar-mini .react-calendar__month-view__weekdays {
+    text-align: center;
+    text-transform: uppercase;
+    font-weight: bold;
+    font-size: 0.7em;
+    color: #6b7280;
+    text-decoration: none;
+}
+.react-calendar-mini .react-calendar__month-view__weekdays abbr {
+    text-decoration: none;
+}
+
+.react-calendar-mini .react-calendar__tile {
+    background: none;
+    text-align: center;
+    line-height: 2em;
+    font-size: 0.85em;
+    border-radius: 6px;
+    color: #d1d5db;
+}
+
+.react-calendar-mini .react-calendar__tile:enabled:hover,
+.react-calendar-mini .react-calendar__tile:enabled:focus {
+    background-color: rgba(255, 255, 255, 0.1);
     color: white;
 }
 
-.current-month-events-list {
-    margin-top: 20px;
-    padding-top: 15px;
-    border-top: 1px solid var(--border-color);
+.react-calendar-mini .react-calendar__tile--now {
+    background: transparent;
+    color: #60a5fa;
+    font-weight: bold;
 }
 
-.current-month-events-list h3 {
-    color: var(--text-color-light);
-    margin-bottom: 10px;
-    font-size: 1.1em;
+.react-calendar-mini .react-calendar__tile--active {
+    background: #2563eb;
+    color: white;
 }
 
-.current-month-events-list ul {
-    list-style: none;
-    padding: 0;
+.today-highlight {
+    font-weight: bold;
+    color: #60a5fa !important;
 }
 
-.current-month-events-list li {
-    background-color: var(--bg-dark);
-    border-left: 3px solid var(--accent-color);
-    padding: 8px 10px;
-    margin-bottom: 5px;
+/* Custom Scrollbar for Grid */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
     border-radius: 4px;
-    font-size: 0.9em;
-    color: var(--text-color-primary);
 }
-
-.current-month-events-list li strong {
-    color: var(--text-color-light);
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
 }

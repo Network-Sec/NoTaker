@@ -75,7 +75,7 @@ export const ToolboxView = ({ items = [], onDelete, onEdit }: ToolboxViewProps) 
                             </div>
 
                             {/* Main Content Area - Clickable link */}
-                            <a href={item.url} target="_blank" rel="noreferrer" className="flex flex-col items-center flex-grow justify-center w-full h-full text-center"> {/* Removed explicit padding and negative margin */}
+                            <a href={item.url} target="_blank" rel="noreferrer" className="flex flex-col items-center flex-grow justify-center w-full h-full text-center py-2">
                                 {/* Icon / Image */}
                                 <div className="flex items-center justify-center w-full h-20 overflow-hidden mb-2 rounded bg-black/20 border border-white/10 group-hover:border-techCyan/50 transition-colors">
                                     {item.imageUrl ? (
@@ -89,19 +89,19 @@ export const ToolboxView = ({ items = [], onDelete, onEdit }: ToolboxViewProps) 
 
                                 {/* Title & URL */}
                                 <div className="w-full px-1">
-                                    <div className="text-sm font-semibold text-gray-200 truncate w-full font-mono">{item.title || formatUrl(item.url)}</div>
-                                    <div className="text-xs text-gray-500 truncate w-full font-mono mt-1 flex items-center justify-center gap-1">
-                                        <ExternalLink size={10} className="text-techOrange" />
+                                    <div className="text-sm font-semibold text-white truncate w-full font-mono">{item.title || formatUrl(item.url)}</div> {/* Changed text-gray-200 to text-white */}
+                                    <div className="text-sm text-white/80 truncate w-full font-mono mt-1 flex items-center justify-center gap-1"> {/* Changed text-gray-400 to text-white/80 */}
+                                        <ExternalLink size={12} className="text-techOrange" />
                                         {formatUrl(item.url)}
                                     </div>
                                 </div>
                             </a>
 
                             {/* Meta info at bottom */}
-                            <div className="w-full text-center text-[10px] text-gray-600 font-mono mt-2">
+                            <div className="w-full text-center text-xs text-white/60 font-mono mt-2"> {/* Changed text-gray-500 to text-white/60 */}
                                 {item.timestamp ? new Date(item.timestamp).toLocaleString() : ''}
                                 {item.description && (
-                                    <p className="text-[9px] text-gray-700 truncate mt-1 px-1">{item.description}</p>
+                                    <p className="text-xs text-white/50 truncate mt-1 px-1">{item.description}</p>
                                 )}
                             </div>
                         </div>

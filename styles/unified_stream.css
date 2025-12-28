@@ -11,19 +11,19 @@
     flex-direction: column;
     gap: 15px; 
     padding: 0 20px; 
-    flex: 1; /* Allow it to take available space */
-    min-width: 650px; /* Optional: set a max-width if needed to control overall width */
+    flex: 1 1 650px; /* Allow it to grow, shrink, with a base of 650px */
+    max-width: 650px; /* Limit its maximum width */
     padding-right: 10px;
 }
 
 .unified-right-side-content {
-    flex: 1; 
+    flex: 0 0 350px; /* Fixed width of 350px, no grow or shrink */
     display: flex;
     flex-direction: column;
     gap: 12px; 
     padding: 0 20px; 
     position: relative; 
-    width: 350px;
+    /* width: 350px; REMOVED as flex-basis handles this */
 }
 
 
@@ -350,8 +350,8 @@
 /* Memo Timestamp Styling */
 .memo-timestamp {
     position: absolute;
-    bottom: 15px; /* Adjust as needed for padding */
-    right: 20px; /* Adjust as needed for padding */
+    bottom: 12px;
+    right: 42px;
     font-size: 0.75rem;
     color: var(--text-muted-color);
     background-color: rgba(0,0,0,0.7); /* To ensure visibility over memo content */
@@ -361,7 +361,7 @@
     color: #f0b962;
     z-index: 10;
     font-family: 'Fira Code';
-    font-size: 17px;
+    font-size: 15px;
 }
 
 /* --- MemoItem Editing Styles --- */
@@ -525,7 +525,7 @@
     border: 1px solid var(--border-color);
     border-radius: 4px;
     padding: 5px 0;
-    min-width: 150px;
+    min-width: 200px;
     box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     list-style: none; /* Remove list styling */
 }
