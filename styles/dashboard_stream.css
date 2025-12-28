@@ -1,6 +1,7 @@
 .dashboard-stream {
     flex-grow: 1;
     overflow-y: auto;
+    overflow-x: auto; /* Add horizontal scrolling */
     padding: 20px 10px;
     /* Apply custom scrollbar style here via class in JSX, 
        but we also ensure the track is styled if class isn't applied perfectly yet */

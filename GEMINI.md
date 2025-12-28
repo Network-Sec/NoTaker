@@ -63,6 +63,7 @@ The application is currently in version 0.5.0.alpha, serving as a demo but not f
 *   **Restyle `SettingsPage`:** Applied modern, clean, futuristic styling, including `tech-panel` sections, `tech-input` fields, and new `ToggleSwitch` components for boolean settings.
 *   **Comprehensive Operation Logging:** Committed to logging all future operations to `OPERATIONLOG.md`.
 *   **New Daily Counter Component:** Implemented a new, tiny sidebar component with backend persistence for managing a daily counter with start date, initial values, and incremental entries with calculated totals.
+*   **Fixed `SEARCH_BAR_HEIGHT_OFFSET` ReferenceError:** Resolved the crashing issue in `index.tsx` by ensuring the `SEARCH_BAR_HEIGHT_OFFSET` constant is properly defined.
 
 ## Gemini TODO List
 

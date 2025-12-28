@@ -30,7 +30,10 @@ import { AIConversationStream } from './components/AIConversationStream'; // New
 import { AIInput } from './components/AIInput'; // New AI Input Component
 import { IdentityOverview } from './components/IdentityOverview'; // New IdentityOverview Component
 import type { AIConversationItem } from './types'; // Import AI Conversation Item Type
-import { DailyCounter } from './components/DailyCounter'; // Import DailyCounter
+import { DailyCounterFullView } from './components/DailyCounterFullView'; // Import DailyCounterFullView
+import { DailyCounterSidebarWidget } from './components/DailyCounterSidebarWidget'; // Import DailyCounterSidebarWidget
+
+const SEARCH_BAR_HEIGHT_OFFSET = 100; // Define this constant once at the module level
 
 const App = () => {
   const [mainView, setMainView] = useState<MainView>('dashboard');
@@ -62,8 +65,7 @@ const App = () => {
   const prevSelectedDateRef = useRef<Date | null>(null);
   const prevMemosLength = useRef(0); // Add this ref
   const initialScrollDoneRef = useRef(false); // New ref for initial scroll
-  const SEARCH_BAR_HEIGHT_OFFSET = 100;
-
+  
   // Effect to keep track of the previous selectedDate
   useEffect(() => {
       prevSelectedDateRef.current = selectedDate;
@@ -420,7 +422,7 @@ const App = () => {
                     onEventClick={handleEventClick}
                 />
                 <QuickScrollButtons streamRef={dashboardStreamRef} />
-                <DailyCounter />
+                <DailyCounterSidebarWidget setMainView={setMainView} />
             </aside>
             <main className="main-content">
                   <GlobalSearchBar 
@@ -495,6 +497,11 @@ const App = () => {
       case 'identity-overview': return (
         <main className="main-content">
           <IdentityOverview />
+        </main>
+      );
+      case 'daily-counter-full': return (
+        <main className="main-content">
+          <DailyCounterFullView setMainView={setMainView} />
         </main>
       );
       default: return null;

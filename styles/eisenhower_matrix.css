@@ -1,8 +1,8 @@
 /* === WIDGET: EISENHOWER MATRIX === */
 .eisenhower-matrix-container {
-  margin-top: 1.5rem;
+  margin-top: 0;
   padding-top: 1.5rem;
-  border-top: 1px solid var(--border-color);
+  border-top: none;
 }
 .eisenhower-matrix-container h3 {
   font-size: 1rem;

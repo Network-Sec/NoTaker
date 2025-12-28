@@ -1,6 +1,6 @@
 .sidebar-calendar-widget {
     margin: 0;
-    margin-top: 40px;
+    margin-top: 20px;
     border: 1px solid var(--border-color);
     padding: 0;
     background-color: var(--surface-color);
@@ -51,7 +51,7 @@
     flex-direction: column;
     justify-content: flex-start; /* Align content to top */
     align-items: flex-start; /* Align content to left */
-    height: 4.5em; /* Make day cells slightly taller for rectangular shape */
+    height: 4em; /* Make day cells slightly taller for rectangular shape */
     background-color: var(--bg-color);
     border: 1px solid var(--border-color); /* Subtle border for each day cell */
     border-radius: 0px; /* No rounded corners for day cells */

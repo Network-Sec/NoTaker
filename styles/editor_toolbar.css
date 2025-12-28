@@ -399,3 +399,8 @@
 .time-controls input[type="checkbox"]:checked::before {
     transform: scale(1); /* Reveal when checked */
 }
+
+/* --- Custom Override for CalendarInput Icon in MemoInput's Time Controls --- */
+.memo-input-wrapper .editor-toolbar .time-controls .flex.items-center.gap-2 svg[data-lucide="clock"] {
+    display: none !important;
+}

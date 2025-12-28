@@ -34,6 +34,9 @@ export const IconSidebar = ({ mainView, setMainView }: IconSidebarProps) => (
         <button className={`icon-button ${mainView === 'toolbox' ? 'active' : ''}`} title="Toolbox" onClick={() => setMainView('toolbox')}>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M22 9.24l-7.19-.62L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.63-7.03L22 9.24zM12 15.4l-3.76 2.27 1-4.28-3.32-2.88 4.38-.38L12 6.1l1.71 4.04 4.38.38-3.32 2.88 1 4.28L12 15.4z"/></svg>
         </button>
+        <button className={`icon-button ${mainView === 'daily-counter-full' ? 'active' : ''}`} title="Coffee Counter" onClick={() => setMainView('daily-counter-full')}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-coffee"><path d="M10 2v6h3a4 4 0 0 1 4 4v2a2 2 0 0 0 2 2v0a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2h-7Z"/><path d="M4 6H2v6c0 1.1.9 2 2 2h2"/><path d="M2 22h16c1.1 0 2-.9 2-2v-4H2v4a2 2 0 0 0 2 2Z"/></svg>
+        </button>
         
         {/* Spacer for bottom alignment if using flex, or just bottom placement */}
         <div style={{flexGrow: 1}}></div>
