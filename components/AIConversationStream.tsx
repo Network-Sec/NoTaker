@@ -93,7 +93,7 @@ const AIConversationStreamComponent = (
     if (clusters.length === 0) return <div className="empty-stream">Start a conversation with AI!</div>;
 
     return (
-        <div className="dashboard-stream" ref={ref}> 
+        <div className="dashboard-stream custom-scrollbar" ref={ref}>
             {clusters.map((cluster) => (
                 <UnifiedStreamItem
                     key={cluster.time}

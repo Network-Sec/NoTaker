@@ -130,6 +130,14 @@ export const saveTasks = async (date: string, tasks: Task[]): Promise<void> => {
     } catch (error) { console.error("Failed to save tasks:", error); }
 };
 
+export const deleteTask = async (date: string, taskId: string): Promise<void> => {
+    try {
+        await fetch(`${API_URL}/api/tasks/${taskId}?date=${date}`, {
+            method: 'DELETE',
+        });
+    } catch (error) { console.error("Failed to delete task:", error); }
+};
+
 // --- Events ---
 export const getEvents = async (): Promise<Event[]> => {
     try {

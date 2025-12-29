@@ -62,15 +62,11 @@ const App = () => {
   const [editingEvent, setEditingEvent] = useState<Event | undefined>(undefined);
   const dashboardStreamRef = useRef<HTMLDivElement>(null);
   const aiConversationStreamRef = useRef<HTMLDivElement>(null); // Ref for AI conversation stream
-  const prevSelectedDateRef = useRef<Date | null>(null);
+  const prevSelectedDateRef = useRef<Date>(selectedDate);
+  const prevMainStreamViewModeRef = useRef<string>(mainStreamViewMode);
   const prevMemosLength = useRef(0); // Add this ref
   const initialScrollDoneRef = useRef(false); // New ref for initial scroll
   
-  // Effect to keep track of the previous selectedDate
-  useEffect(() => {
-      prevSelectedDateRef.current = selectedDate;
-  }, [selectedDate]);
-
   // New state for consolidated app settings
   const [appSettings, setAppSettings] = useState<any>({
     firefox: {},
@@ -86,6 +82,18 @@ const App = () => {
     // TODO: Persist newConfig to DB
   }, []);
 
+  // --- Task Refresh Helper ---
+  const refreshTasks = useCallback(async () => {
+    setTasksLoaded(false);
+    const year = selectedDate.getFullYear();
+    const month = (selectedDate.getMonth() + 1).toString().padStart(2, '0');
+    const day = selectedDate.getDate().toString().padStart(2, '0');
+    const dateString = `${year}-${month}-${day}`;
+    const fetchedTasks = await db.getTasks(dateString);
+    setTasks(fetchedTasks);
+    setTasksLoaded(true);
+  }, [selectedDate]);
+
   // --- Handlers for Settings --- (REMOVED: handleImportIntervalChange, handleBrowserPathsConfigChange)
   // const handleImportIntervalChange = useCallback((interval: number) => { console.log(interval); }, []);
   // const handleBrowserPathsConfigChange = useCallback((config: any) => { console.log(config); }, []);
@@ -97,11 +105,8 @@ const App = () => {
             db.getMemos(), db.getBookmarks(), db.getHistory(), db.getEvents(), db.getAIConversations(), db.getSettings(), db.getToolboxItems() 
         ]).then(([m, b, h, e, a, s, t]) => { 
             setMemos(m); 
-            console.log('[App] Memos loaded:', m); 
             setBookmarks(b); 
-            console.log('[App] Bookmarks loaded:', b); 
             setHistory(h); 
-            console.log('[App] History loaded:', h); 
             setEvents(e); setAiConversations(a); setAppSettings(s || { 
               firefox: {}, chrome: {}, ai: {}, general: { importInterval: 30, darkMode: false, autoScroll: true }, generic: {}
             });
@@ -114,47 +119,51 @@ const App = () => {
     if (sessionStorage.getItem('initialLoadDone')) {
         loadData();
     } else {
-        console.log('[App] First startup detected, delaying frontend load by 5 seconds...');
         setTimeout(loadData, 5000);
     }
   }, []);
 
   // Effect to save appSettings whenever they change
   useEffect(() => {
-    console.log('[Settings Effect] Saving appSettings:', appSettings);
     db.saveSettings(appSettings);
   }, [appSettings]);
 
   // --- Comprehensive Auto-Scrolling Effect for Memo Stream ---
   useEffect(() => {
     const streamElement = dashboardStreamRef.current;
+    
+    // Only proceed if we are in the dashboard memo view
     if (streamElement && mainView === 'dashboard' && mainStreamViewMode === 'memo') {
-      const isScrolledToBottom = streamElement.scrollHeight - streamElement.clientHeight <= streamElement.scrollTop + 1;
+      const isScrolledToBottom = streamElement.scrollHeight - streamElement.clientHeight <= streamElement.scrollTop + 50; // Tolerance of 50px
       
-      // New condition for initial load scroll: only if initialDataLoaded is true and we haven't scrolled yet
+      // Determine triggers
       const isInitialLoadScroll = initialDataLoaded && !initialScrollDoneRef.current;
-
-      console.log(`[App - AutoScroll Effect] Triggered. Memos length: ${memos.length}, prevMemosLength: ${prevMemosLength.current}, isScrolledToBottom: ${isScrolledToBottom}, isDateChange: ${prevSelectedDateRef.current?.toDateString() !== selectedDate.toDateString() && !continueTimestamp}, isInitialLoadScroll: ${isInitialLoadScroll}`);
-
-      // Condition 1: New memos added and user was already at the bottom
+      const isDateChange = !isSameDay(prevSelectedDateRef.current, selectedDate) && !continueTimestamp;
+      const isViewChange = prevMainStreamViewModeRef.current !== mainStreamViewMode;
       const hasNewMemosAndUserAtBottom = memos.length > prevMemosLength.current && isScrolledToBottom;
-      
-      // Condition 2: Selected date changed and not continuing a timestamp
-      const isDateChange = prevSelectedDateRef.current?.toDateString() !== selectedDate.toDateString() && !continueTimestamp;
 
-      // Scroll if new memos arrived and user was at bottom, or if date changed, OR on initial data load
-      if (hasNewMemosAndUserAtBottom || isDateChange || isInitialLoadScroll) {
-        streamElement.scrollTop = streamElement.scrollHeight;
-        console.log(`[App - AutoScroll Effect] Scrolled. scrollHeight=${streamElement.scrollHeight}, clientHeight=${streamElement.clientHeight}`);
+      if (isInitialLoadScroll || isDateChange || isViewChange || hasNewMemosAndUserAtBottom) {
+        setTimeout(() => {
+            if (streamElement) {
+                streamElement.scrollTop = streamElement.scrollHeight;
+            }
+        }, 50); // Small delay to allow DOM paint
+        
         if (isInitialLoadScroll) {
-            initialScrollDoneRef.current = true; // Mark initial scroll as done
+            initialScrollDoneRef.current = true;
         }
-      } else {
-        console.log('[App - AutoScroll Effect] Scroll condition not met.');
       }
-      prevMemosLength.current = memos.length; // Update for next render
+      
+      // Update refs for next run
+      prevMemosLength.current = memos.length;
+      prevSelectedDateRef.current = selectedDate;
+      prevMainStreamViewModeRef.current = mainStreamViewMode;
+
     } else {
-        console.log('[App - AutoScroll Effect] Skipped (ref null or not dashboard memo view).');
+        // Even if not scrolling, keep refs updated to prevent stale comparisons when switching back
+        prevMemosLength.current = memos.length;
+        prevSelectedDateRef.current = selectedDate;
+        prevMainStreamViewModeRef.current = mainStreamViewMode;
     }
   }, [memos, mainView, selectedDate, continueTimestamp, mainStreamViewMode, initialDataLoaded]);
 
@@ -167,27 +176,13 @@ const App = () => {
 
 
   useEffect(() => {
-    setTasksLoaded(false);
-    // Correctly format dateString to avoid timezone issues (YYYY-MM-DD)
-    const year = selectedDate.getFullYear();
-    const month = (selectedDate.getMonth() + 1).toString().padStart(2, '0');
-    const day = selectedDate.getDate().toString().padStart(2, '0');
-    const dateString = `${year}-${month}-${day}`;
-
-    console.log(`[Frontend] Calling db.getTasks for ${dateString}`);
-    db.getTasks(dateString).then(fetchedTasks => {
-        console.log(`[Tasks Effect] Fetched tasks for ${dateString}:`, fetchedTasks);
-        setTasks(fetchedTasks);
-        setTasksLoaded(true);
-    }).catch(console.error);
-  }, [selectedDate]);
+    refreshTasks();
+  }, [selectedDate, refreshTasks]);
 
   useEffect(() => {
-    console.log('Scroll Effect Triggered. scrollToMemoId:', scrollToMemoId);
     if (scrollToMemoId && mainStreamViewMode === 'memo') { // Only scroll memo stream
       const performScroll = () => {
         const memoElement = document.querySelector(`[data-memo-id="${scrollToMemoId}"]`);
-        console.log('Memo Element found:', memoElement);
         if (memoElement && dashboardStreamRef.current) {
           const targetScrollTop = Math.max(0, memoElement.offsetTop - SEARCH_BAR_HEIGHT_OFFSET);
           dashboardStreamRef.current.scrollTo({
@@ -328,63 +323,45 @@ const App = () => {
 
 
 
-  const addTask = useCallback((c: string, q: EisenhowerQuadrant) => {
-    setTasks(prev => {
-      const newTasks = [...prev, {id:`t-${Date.now()}`, content:c, quadrant:q, completed: false }]; // Initialize completed as false
-      const year = selectedDate.getFullYear();
-      const month = (selectedDate.getMonth() + 1).toString().padStart(2, '0');
-      const day = selectedDate.getDate().toString().padStart(2, '0');
-      const dateString = `${year}-${month}-${day}`;
-      console.log(`[Frontend] addTask called for ${dateString}. Saving tasks:`, newTasks);
-      db.saveTasks(dateString, newTasks); // Explicit save
-      return newTasks;
-    });
-  }, [selectedDate]);
+  const addTask = useCallback(async (c: string, q: EisenhowerQuadrant) => { // Made async
+    const dateString = selectedDate.toISOString().split('T')[0];
+    // Create new task, ensuring date property is set for filtering
+    const newTasks = [...tasks, {id:`t-${Date.now()}`, content:c, quadrant:q, completed: false, date: dateString }]; 
+    await db.saveTasks(dateString, newTasks);
+    refreshTasks(); // Refresh after save
+  }, [selectedDate, tasks, refreshTasks]); // Added tasks and refreshTasks to dependencies
 
-  const toggleTaskCompleted = useCallback((id: string) => {
-    setTasks(prev => {
-      const newTasks = prev.map(task =>
-        task.id === id ? { ...task, completed: !task.completed } : task
-      );
-      const year = selectedDate.getFullYear();
-      const month = (selectedDate.getMonth() + 1).toString().padStart(2, '0');
-      const day = selectedDate.getDate().toString().padStart(2, '0');
-      const dateString = `${year}-${month}-${day}`;
-      console.log(`[Frontend] toggleTaskCompleted called for ${dateString}. Saving tasks:`, newTasks);
-      db.saveTasks(dateString, newTasks); // Explicit save
-      return newTasks;
-    });
-  }, [selectedDate]);
+  const toggleTaskCompleted = useCallback(async (id: string) => { // Made async
+    const dateString = selectedDate.toISOString().split('T')[0];
+    // Use the current 'tasks' state from closure, which is the latest fetched list
+    const newTasks = tasks.map(task => 
+      task.id === id ? { ...task, completed: !task.completed } : task
+    );
+    await db.saveTasks(dateString, newTasks);
+    refreshTasks(); // Refresh after save
+  }, [selectedDate, tasks, refreshTasks]); // Added tasks and refreshTasks to dependencies
 
-  const updateTask = useCallback((updatedTask: Task) => {
-    setTasks(prev => {
-      const newTasks = prev.map(t => t.id === updatedTask.id ? updatedTask : t);
-      const dateString = selectedDate.toISOString().split('T')[0];
-      console.log(`[Frontend] updateTask called for ${dateString}. Saving tasks:`, newTasks);
-      db.saveTasks(dateString, newTasks); // Explicit save
-      return newTasks;
-    });
-  }, [selectedDate]);
-  const moveTask = useCallback((updatedTask: Task) => {
-    setTasks(prev => {
-      const newTasks = prev.map(t => t.id === updatedTask.id ? updatedTask : t);
-      const dateString = selectedDate.toISOString().split('T')[0];
-      console.log(`[Frontend] moveTask called for ${dateString}. Saving tasks:`, newTasks);
-      db.saveTasks(dateString, newTasks); // Explicit save
-      return newTasks;
-    });
-  }, [selectedDate]);
-  const deleteTask = useCallback((id: string) => {
-    setTasks(prev => {
-      const dateString = selectedDate.toISOString().split('T')[0];
-      const newTasks = prev.map(t =>
-        t.id === id ? { ...t, deletedOn: dateString } : t
-      );
-      console.log(`[Frontend] deleteTask called for ${dateString}. Marking task ID ${id} as deleted. Saving tasks:`, newTasks);
-      db.saveTasks(dateString, newTasks); // Explicit save with deletedOn
-      return newTasks;
-    });
-  }, [selectedDate]);
+  const updateTask = useCallback(async (updatedTask: Task) => { // Made async
+    const dateString = selectedDate.toISOString().split('T')[0];
+    const newTasks = tasks.map(t => t.id === updatedTask.id ? updatedTask : t);
+    await db.saveTasks(dateString, newTasks);
+    refreshTasks(); // Refresh after save
+  }, [selectedDate, tasks, refreshTasks]); // Added tasks and refreshTasks to dependencies
+  const moveTask = useCallback(async (updatedTask: Task) => { // Made async
+    const dateString = selectedDate.toISOString().split('T')[0];
+    const newTasks = tasks.map(t => t.id === updatedTask.id ? updatedTask : t);
+    await db.saveTasks(dateString, newTasks);
+    refreshTasks(); // Refresh after save
+  }, [selectedDate, tasks, refreshTasks]); // Added tasks and refreshTasks to dependencies
+  const deleteTask = useCallback(async (id: string) => { // Made async
+    const dateString = selectedDate.toISOString().split('T')[0];
+    // Use current 'tasks' state, which is the latest fetched list
+    const newTasks = tasks.map(t => 
+      t.id === id ? { ...t, deletedOn: dateString } : t
+    );
+    await db.saveTasks(dateString, newTasks); // Save with deletedOn
+    refreshTasks(); // Refresh after save
+  }, [selectedDate, tasks, refreshTasks]); // Added tasks and refreshTasks to dependencies
 
   const handleTagSelect = useCallback((t: string) => setActiveTag(t), []);
   const handleDateSelect = useCallback((d: Date) => setSelectedDate(d), []);
@@ -397,39 +374,39 @@ const App = () => {
     return aiConversations.filter(conv => isSameDay(new Date(conv.timestamp), selectedDate));
   }, [aiConversations, selectedDate]);
 
-  const renderMainView = () => {
-    console.log('Current mainView:', mainView);
-    switch (mainView) {
-      case 'dashboard':
+      const renderMainView = () => {
+      switch (mainView) {      case 'dashboard':
         return (
           <div className="main-content-wrapper">
             <aside className="secondary-sidebar">
-                <MainStreamToggle mainStreamViewMode={mainStreamViewMode} setMainStreamViewMode={setMainStreamViewMode} />
                 <Calendar memos={memos} selectedDate={selectedDate} setSelectedDate={handleDateSelect} currentMonth={currentMonth} setCurrentMonth={setCurrentMonth} activeTag={activeTag} />
                 <EisenhowerMatrix 
                     tasks={tasks} 
                     onAddTask={addTask} 
                     onUpdateTask={task => updateTask(task)} 
                     onMoveTask={task => moveTask(task)} 
-                    onDeleteTask={task => deleteTask(task)}
+                    onDeleteTask={task => deleteTask(task.id)}
                     onToggleTaskCompleted={toggleTaskCompleted} 
                     selectedDate={selectedDate} 
                 />
                 <SidebarCalendarWidget 
                     events={events} 
                     onAddEvent={addEvent} 
-                    onDayClick={(date) => {console.log('Day clicked:', date); setSelectedDateForModal(date); setIsEventModalOpen(true); setEditingEvent(undefined);}} 
+                    onDayClick={(date) => { setSelectedDateForModal(date); setIsEventModalOpen(true); setEditingEvent(undefined);}} 
                     onEventClick={handleEventClick}
                 />
                 <QuickScrollButtons streamRef={dashboardStreamRef} />
                 <DailyCounterSidebarWidget setMainView={setMainView} />
             </aside>
             <main className="main-content">
-                  <GlobalSearchBar 
-                    setMainView={setMainView} 
-                    setSelectedDate={setSelectedDate} 
-                    setScrollToMemoId={setScrollToMemoId} 
-                  />
+                  <div className="flex justify-between items-center mb-4"> {/* Container for search bar and toggle */}
+                      <GlobalSearchBar 
+                        setMainView={setMainView} 
+                        setSelectedDate={setSelectedDate} 
+                        setScrollToMemoId={setScrollToMemoId} 
+                      />
+                      <MainStreamToggle mainStreamViewMode={mainStreamViewMode} setMainStreamViewMode={setMainStreamViewMode} />
+                  </div>
                   {mainStreamViewMode === 'memo' ? (
                     <>
                       {activeTag && <div className="filter-status"><span>Filtering by: <strong>#{activeTag}</strong></span><button className="clear-filter-button" onClick={() => setActiveTag(null)}>Clear</button></div>}
@@ -439,7 +416,6 @@ const App = () => {
                                               onTagSelect={handleTagSelect} selectedDate={selectedDate} 
                                               onUpdateMemo={updateMemo} onDeleteMemo={deleteMemo} onOpenImageEditor={handleOpenImageEditor}
                                               onTimestampClick={(time) => { 
-                                                console.log('[index.tsx] onTimestampClick received:', time);
                                                 setNewMemoTimestamp(time); 
                                                 setContinueTimestamp(true); 
                                               }}

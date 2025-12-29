@@ -21,10 +21,10 @@ export const IconSidebar = ({ mainView, setMainView }: IconSidebarProps) => (
              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M22 16V4c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2zM11 9l2.5 4L17 9l4 8H3l4-5.33zM2 20h20v2H2v-2z"/></svg>
         </button>
         <button className={`icon-button ${mainView === 'full-calendar' ? 'active' : ''}`} title="Full Calendar" onClick={() => setMainView('full-calendar')}>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11zM5 7V6h14v1H5z"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-2 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11zM5 7V6h14v1H5z"/></svg>
         </button>
-        <button className={`icon-button ${mainView === 'knowledge-graph' ? 'active' : ''}`} title="Knowledge Graph" onClick={() => setMainView('knowledge-graph')}>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.23-.09.46-.09.7s.04.47.09.7l-7.05 4.11c-.54-.5-1.25-.81-2.04-.81-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3c0-.24-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3z"/></svg>
+        <button className={`icon-button ${mainView === 'daily-counter-full' ? 'active' : ''}`} title="Coffee Counter" onClick={() => setMainView('daily-counter-full')}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-coffee" aria-hidden="true"><path d="M10 2v2"></path><path d="M14 2v2"></path><path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1"></path><path d="M6 2v2"></path></svg>
         </button>
         <button className={`icon-button ${mainView === 'identity-overview' ? 'active' : ''}`} title="Identities" onClick={() => setMainView('identity-overview')}>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
@@ -33,9 +33,6 @@ export const IconSidebar = ({ mainView, setMainView }: IconSidebarProps) => (
         </button>
         <button className={`icon-button ${mainView === 'toolbox' ? 'active' : ''}`} title="Toolbox" onClick={() => setMainView('toolbox')}>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M22 9.24l-7.19-.62L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.63-7.03L22 9.24zM12 15.4l-3.76 2.27 1-4.28-3.32-2.88 4.38-.38L12 6.1l1.71 4.04 4.38.38-3.32 2.88 1 4.28L12 15.4z"/></svg>
-        </button>
-        <button className={`icon-button ${mainView === 'daily-counter-full' ? 'active' : ''}`} title="Coffee Counter" onClick={() => setMainView('daily-counter-full')}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-coffee"><path d="M10 2v6h3a4 4 0 0 1 4 4v2a2 2 0 0 0 2 2v0a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2h-7Z"/><path d="M4 6H2v6c0 1.1.9 2 2 2h2"/><path d="M2 22h16c1.1 0 2-.9 2-2v-4H2v4a2 2 0 0 0 2 2Z"/></svg>
         </button>
         
         {/* Spacer for bottom alignment if using flex, or just bottom placement */}

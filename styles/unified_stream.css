@@ -350,8 +350,9 @@
 /* Memo Timestamp Styling */
 .memo-timestamp {
     position: absolute;
-    bottom: 12px;
+    top: 12px;
     right: 42px;
+    height: 26px;
     font-size: 0.75rem;
     color: var(--text-muted-color);
     background-color: rgba(0,0,0,0.7); /* To ensure visibility over memo content */

@@ -85,6 +85,23 @@ function setupDailyCounterApiRoutes(app, db) {
         );
     });
 
+    // Update an existing daily entry
+    app.put('/api/daily-counter/entries/:id', (req, res) => {
+        const { date, val1_input, val2_input } = req.body;
+        const { id } = req.params;
+        if (!id || !date || (val1_input === undefined) || (val2_input === undefined)) {
+            return res.status(400).json({ error: 'id, date, val1_input, and val2_input are required' });
+        }
+        db.run('UPDATE daily_counter_entries SET date = ?, val1_input = ?, val2_input = ? WHERE id = ?',
+            [date, val1_input, val2_input, id],
+            function (err) {
+                if (err) return res.status(500).json({ error: err.message });
+                if (this.changes === 0) return res.status(404).json({ error: 'Entry not found' });
+                res.json({ id, date, val1_input, val2_input, changes: this.changes });
+            }
+        );
+    });
+
     // Get full counter state (config + calculated entries)
     app.get('/api/daily-counter/full-state', async (req, res) => {
         try {

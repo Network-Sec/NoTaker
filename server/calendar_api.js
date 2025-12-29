@@ -136,18 +136,23 @@ function setupCalendarApiRoutes(app, db) {
         });
     });
 
-    // Add a source
-    app.post('/api/calendar/sources', (req, res) => {
-        const { url, name, color, type } = req.body;
-        db.run('INSERT INTO calendar_sources (url, name, color, type) VALUES (?, ?, ?, ?)', 
-            [url, name, color || '#3b82f6', type || 'ical'], 
-            function(err) {
-                if (err) return res.status(500).json({ error: err.message });
-                res.json({ id: this.lastID, url, name, color, type });
+        // Add a source
+        app.post('/api/calendar/sources', (req, res) => {
+            const { url, name, color, type } = req.body;
+    
+            // Prevent adding 'google' type calendars via API, enforce ENV sync for them
+            if (type === 'google') {
+                return res.status(403).json({ error: "Google Calendar sources can only be managed via the GOOGLE_CALENDAR_URLS environment variable." });
             }
-        );
-    });
-
+    
+            db.run('INSERT INTO calendar_sources (url, name, color, type) VALUES (?, ?, ?, ?)',
+                [url, name, color || '#3b82f6', type || 'ical'],
+                function(err) {
+                    if (err) return res.status(500).json({ error: err.message });
+                    res.json({ id: this.lastID, url, name, color, type });
+                }
+            );
+        });
     // Delete a source
     app.delete('/api/calendar/sources/:id', (req, res) => {
         db.run('DELETE FROM calendar_sources WHERE id = ?', req.params.id, function(err) {

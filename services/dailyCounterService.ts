@@ -76,3 +76,20 @@ export const addDailyCounterEntry = async (entry: Omit<DailyCounterEntry, 'id' |
         throw error;
     }
 };
+
+export const updateDailyCounterEntry = async (id: number, entry: Omit<DailyCounterEntry, 'id' | 'timestamp' | 'config_id'>): Promise<DailyCounterEntry> => {
+    try {
+        const response = await fetch(`${API_BASE_URL}/entries/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(entry)
+        });
+        if (!response.ok) {
+            throw new Error('Failed to update daily counter entry');
+        }
+        return await response.json();
+    } catch (error) {
+        console.error("Error updating daily counter entry:", error);
+        throw error;
+    }
+};

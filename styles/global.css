@@ -66,8 +66,8 @@ a:hover {
 
 /* === CUSTOM SCROLLBAR UTILITY (3D Bevel / Windows 3.11 Style) === */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 18px; /* Wider/Thicker */
-  height: 18px;
+  width: 24px; /* Wider/Thicker */
+  height: 24px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {

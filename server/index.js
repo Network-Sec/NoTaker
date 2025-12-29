@@ -294,10 +294,9 @@ app.get('/api/tasks', (req, res) => {
             const inheritQuery = `
                 SELECT date FROM tasks 
                 WHERE date < ? 
-                AND (deleted_on IS NULL OR deleted_on > ?) 
                 ORDER BY date DESC LIMIT 1
             `;
-            appDb.get(inheritQuery, [date, date], (err, row) => {
+            appDb.get(inheritQuery, [date], (err, row) => {
                 if (err) {
                     console.error(`[Backend] Error fetching previous day for inheritance for date ${date}:`, err.message);
                     return res.status(500).json({ error: err.message });

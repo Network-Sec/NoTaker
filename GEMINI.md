@@ -67,20 +67,40 @@ The application is currently in version 0.5.0.alpha, serving as a demo but not f
 
 ## Gemini TODO List
 
-- [ ] **Advanced Calendar UI Overhaul (Minor Fixes/Completion):**
-    -   *Status:* Mostly done, requires minor fixes to follow up.
-    -   **Interaction Fix:** Replace the current `alert()` popup on entry click with the full `EventModal` for editing/displaying details.
-    -   **External Events:** Enable editing for external entries (from iCal/Google). Even if sync-back isn't possible, allow local modifications (likely treating them as cloned local events upon save).
-    -   Apply futuristic styling aftertouches to matching `styles` convention.
-
-- [ ] **Calendar Backend Sync Fix:**
-    -   Ensure `server/calendar_api.js` strictly syncs `calendar_sources` with the `GOOGLE_CALENDAR_URLS` environment variable.
-    -   It must delete DB entries not present in the `.env` variable (fixing the issue where old/wrong entries persist).
-    -   It must not save URLs to the DB against the user's request (only sync from env).
-
-- [ ] **Fix Frontend Regressions (MemoInput & Stream):**
-    -   *Context:* These issues resulted from unwanted code changes while working on other components.
-    -   *CRITICAL:* The Memo component is the core of the app. All changes must be **surgical and with extreme care**.
-    -   **Clock Symbol Still Present (Re-addressed):** The clock symbol in `MemoInput`'s `CalendarInput` was still appearing. A forceful CSS rule has been added to `styles/editor_toolbar.css` to hide it. Verification needed.
-    -   **Click Functionality Still Broken (Tracing Logs Added):** Clicking timestamps in `DashboardStream` does not update the time in `MemoInput`. Console logs have been added throughout the component chain. User verification with console output is required to diagnose further.
-    -   **Width Problem Unresolved (Re-addressed):** The `MemoStream` width layout still caused the custom scrollbar to disappear partly. `overflow-x: auto;` has been added to `.dashboard-stream` in `styles/dashboard_stream.css`. Verification needed.
+1.  [completed] Coffee and Milk Feature Enhancements:
+    1.  **IconSidebar:** Remove the yellow color (`text-yellow-500`) from the Coffee Counter icon, keeping the symbol.
+    2.  **DailyCounterSidebarWidget:** Ensure all table entries (rows) are editable. Specifically, `val1` (Coffee) and `val2` (Milk) should be inline editable. Ensure that editing these values does *not* automatically change the entry's timestamp.
+    3.  **DailyCounterFullView:** Make entries editable. Allow the user to manually change the Date and Time of an entry. Ensure that editing other fields (values) does *not* automatically reset or change the datetime.
+2.  [pending] Advanced Calendar UI Overhaul (Minor Fixes/Completion): Apply futuristic styling aftertouches to matching `styles` convention.
+3.  [pending] Fix Frontend Regressions (MemoInput & Stream): Width Problem Unresolved (Re-addressed): The `MemoStream` width layout still caused the custom scrollbar to disappear partly. `overflow-x: auto;` has-been added to `.dashboard-stream` in `styles/dashboard_stream.css`. Verification needed.
+4.  [completed] Fix Frontend Regressions (DailyCounterSidebarWidget): The sidebar widget now displays scrollbars; these must be removed.
+5.  [completed] Fix Frontend Regressions (MemoInput & Stream): Memo stream doesn't scroll down on page load or page or day change, should auto-scroll down.
+6.  [pending] Feature: MemoInput time should be manually editable via a time-only inplace-popup `CalendarInput` widget.
+7.  [completed] Fix Console Error: `Invalid DOM property stroke-width` in IconSidebar.tsx.
+8.  [completed] Fix Console Error: `In HTML, whitespace text nodes cannot be a child of <tr>` in DailyCounterSidebarWidget.tsx.
+9.  [completed] Fix Console Warning: `Invalid DOM property stroke-linejoin` in IconSidebar.tsx.
+10. [completed] Fix Console Warning: `Invalid DOM property class` in IconSidebar.tsx.
+11. [completed] Fix Eisenhower Matrix Regressions:
+    1.  **Deletion Broken:** Removing entries does not work.
+    2.  **Forward Update/Persistence Broken:** Tasks deleted on a specific day (e.g., 25th) are correctly missing on that day but reappear on subsequent days (e.g., 26th). Deleted tasks should remain deleted for all future dates.
+12. [in_progress] General Code Cleanup: Remove excessive console log output from past development sessions. (Apply this continuously while working on files).
+13. [pending] Feature: DailyCounterSidebarWidget new entry UX improvement.
+    1.  The `timestamp` for a new entry should be set when the *first number is added* (on blur or a short delay after typing).
+    2.  After saving a new entry, a *new blank line* should appear for subsequent entries.
+    3.  The `datetime` and new blank line should appear on leaving focus from the input fields or with a few seconds delay after entry.
+14. [in_progress] Refinement: DailyCounterFullView & DailyCounterSidebarWidget Header.
+    1.  In the total display (e.g., "Coffee Left 89", "Milk Left 88"), remove the "Coffee Left" and "Milk Left" strings.
+    2.  Replace them with small icons (e.g., coffee mug, milk carton/bottle) next to the numbers.
+    3.  Goal: Reduce the height of these two big elements.
+15. [pending] Feature: Move MainStreamToggle.
+    Move the "Memo | AI Convo" toggles from the sidebar (`secondary-sidebar`) to the left/right of the `GlobalSearchBar`.
+16. [completed] Refinement: DailyCounterSidebarWidget editable fields.
+    1.  In `EditableDailyCounterRow`, `val1` (Coffee) and `val2` (Milk) columns should *always* be editable (remove `isEditing` state).
+    2.  Hide the up/down arrows (spinners) for `input[type="number"]` fields using CSS.
+17. [pending] BigCalendar Entry Styling & Colors:
+    1.  Apply specific CSS properties to entries (bg-blue-500, text-slate-200, pre-wrap, padding, etc).
+    2.  If no explicit color is assigned, default to one of 8 random rainbow colors.
+18. [pending] BigCalendar Time/Duration Logic & Import Check:
+    1.  If specific time/duration is missing, default to 1h duration (NOT all-day) on Weekly/Daily views.
+    2.  Investigate external import metadata to improve time/duration parsing.
+19. [pending] Feature: Memo Edit Menu - Add to Toolbox option. The Memo Edit Menu (`MemoItem`) currently misses the option to add a link to the "Toolbox". This option needs to be re-added.
