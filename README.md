@@ -1,8 +1,8 @@
-# Memoria Stream - Developer Guide
+# NoTaker - Developer Guide
 
 ## Overview
 
-Memoria Stream is a local-first, powerful note-taking application designed for developers, writers, and thinkers. It combines a free-form daily stream with structured notebooks, task management, and bookmarking to create a comprehensive personal knowledge base.
+NoTaker is a local-first, powerful note-taking application designed for developers, writers, and thinkers. It combines a free-form daily stream with structured notebooks, task management, and bookmarking to create a comprehensive personal knowledge base.
 
 This guide provides instructions for developers to set up the project and outlines the path to building the full desktop application using Electron and SQLite.
 
