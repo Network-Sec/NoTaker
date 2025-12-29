@@ -75,7 +75,7 @@ const getEventStyle = (event: CalendarEvent) => {
         boxSizing: 'border-box',
         wordWrap: 'break-word',
         fontSize: '12px',
-        overflow: 'auto',
+        overflow: 'auto', // Re-added overflow auto
     };
 };
 
@@ -171,10 +171,13 @@ const MonthView = ({ date, events, onDayClick, onEventClick }: { date: Date, eve
                                         {dayEvents.slice(0, 4).map(ev => (
                                             <div 
                                                 key={ev.id} 
-                                                className="font-medium shadow-sm transition-all hover:scale-[1.02]"
+                                                className="font-medium shadow-sm transition-all hover:scale-[1.02] overflow-hidden text-ellipsis whitespace-nowrap"
                                                 style={{ 
                                                     ...getEventStyle(ev),
-                                                    borderLeft: `2px solid ${getEventStyle(ev).backgroundColor}`
+                                                    borderLeft: `2px solid ${getEventStyle(ev).backgroundColor}`,
+                                                    height: 'auto', // Override time-based height for month view
+                                                    maxHeight: '20px', // Constrain event height in month view
+                                                    padding: '2px 5px', // Adjust padding for smaller month view events
                                                 }}
                                                 onClick={(e) => { e.stopPropagation(); onEventClick(ev); }}
                                                 title={`${ev.time} - ${ev.title}`}

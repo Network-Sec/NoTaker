@@ -25,7 +25,6 @@ import { MonthlyCalendar as FullCalendarPage } from './components/MonthlyCalenda
 import KnowledgeGraphView from './components/KnowledgeGraphView'; // New
 import GlobalSearchBar from './components/GlobalSearchBar'; // New
 import QuickScrollButtons from './components/QuickScrollButtons'; // New
-import MainStreamToggle from './components/MainStreamToggle'; // New toggle for main stream
 import { AIConversationStream } from './components/AIConversationStream'; // New AI Stream Component
 import { AIInput } from './components/AIInput'; // New AI Input Component
 import { IdentityOverview } from './components/IdentityOverview'; // New IdentityOverview Component
@@ -399,14 +398,13 @@ const App = () => {
                 <DailyCounterSidebarWidget setMainView={setMainView} />
             </aside>
             <main className="main-content">
-                  <div className="flex justify-between items-center mb-4"> {/* Container for search bar and toggle */}
-                      <GlobalSearchBar 
-                        setMainView={setMainView} 
-                        setSelectedDate={setSelectedDate} 
-                        setScrollToMemoId={setScrollToMemoId} 
-                      />
-                      <MainStreamToggle mainStreamViewMode={mainStreamViewMode} setMainStreamViewMode={setMainStreamViewMode} />
-                  </div>
+                  <GlobalSearchBar 
+                    setMainView={setMainView} 
+                    setSelectedDate={setSelectedDate} 
+                    setScrollToMemoId={setScrollToMemoId}
+                    mainStreamViewMode={mainStreamViewMode} // Pass mainStreamViewMode
+                    setMainStreamViewMode={setMainStreamViewMode} // Pass setMainStreamViewMode
+                  />
                   {mainStreamViewMode === 'memo' ? (
                     <>
                       {activeTag && <div className="filter-status"><span>Filtering by: <strong>#{activeTag}</strong></span><button className="clear-filter-button" onClick={() => setActiveTag(null)}>Clear</button></div>}

@@ -6,8 +6,8 @@ import { useEditorFormatting } from './useEditorFormatting';
 import { getServerUrl } from '../utils';
 import * as db from '../services/db'; 
 import { generateAutoTags, getTagColor } from '../utils/tagUtils';
-import CalendarInput from './CalendarInput'; // Import CalendarInput
-import moment from 'moment'; // Import moment
+import CalendarInput from './CalendarInput'; 
+import moment from 'moment';
 
 const API_URL = getServerUrl();
 
@@ -37,7 +37,6 @@ export const MemoInput = ({
     onContinueTimestampChange: (value: boolean) => void,
     onUpdateMemoLinkPreview: (memoId: number, linkPreview: db.LinkPreviewData) => void
 }) => {
-  console.log('[MemoInput] Received timestamp prop:', timestamp);
   const [blocks, setBlocks] = useState<Block[]>([INITIAL_BLOCK]);
   const [tags, setTags] = useState<string[]>([]);
   const [autoTags, setAutoTags] = useState<string[]>([]);
@@ -56,8 +55,6 @@ export const MemoInput = ({
         return () => clearInterval(timer);
     }
   }, [continueTimestamp, onTimestampChange]);
-
-  // const formattedTime = new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -95,22 +92,15 @@ export const MemoInput = ({
 
     if (isLink) {
         const url = contentToSave.trim();
-        // 1. Add as link immediately. If this fails (500), it throws and stops execution.
         try {
             const newMemoId = await onAddMemo('link', url, finalTags);
-            resetInput(); // Only reset if save succeeded
-
-            // 2. Fetch preview data in background
-            console.log("Fetching preview for:", url);
+            resetInput(); 
             const previewData = await db.getLinkPreview(url);
-            
-            // 3. Update the memo if we got valid data
             if (previewData && (previewData.title || previewData.description)) {
                 onUpdateMemoLinkPreview(newMemoId, previewData);
             }
         } catch (e) {
-            console.error("Failed to save link memo or preview:", e);
-            // We don't reset input if the main save failed, allowing user to retry
+            console.error("Failed to save link memo:", e);
         }
     } else {
         try {
@@ -272,24 +262,36 @@ export const MemoInput = ({
     <div className="memo-input-container">
       <div className="memo-input-wrapper" onKeyDown={handleKeyDown} onPaste={handlePaste}>
         <div className="editor-toolbar">
-            <div className="time-controls flex items-center gap-2"> {/* Added flex and gap */}
-                <CalendarInput 
-                    mode="time" 
-                    value={timestamp ? moment(timestamp).toDate() : null} 
+            <div className="time-controls flex items-center gap-2">
+                {/* Wrapped Time Input */}
+                <CalendarInput
+                    mode="time"
+                    value={timestamp ? new Date(timestamp) : new Date()}
                     onChange={(date) => {
-                        const newTimestamp = date ? date.toISOString() : new Date().toISOString();
-                        console.log('[MemoInput] CalendarInput onChange called, new timestamp:', newTimestamp);
-                        onTimestampChange(newTimestamp);
-                    }} 
-                    placeholder="Current Time" 
-                    hideIcon={true} // Hide the clock icon
-                />
-                <label className="flex items-center gap-1 text-sm text-gray-400 font-mono"> {/* Styled label */}
+                        if (date) onTimestampChange(date.toISOString());
+                    }}
+                >
+                    <input
+                        type="text"
+                        value={moment(timestamp).format('HH:mm')}
+                        onChange={(e) => {
+                            const newTime = e.target.value;
+                            const [hours, minutes] = newTime.split(':').map(Number);
+                            const baseDate = timestamp ? moment(timestamp) : moment();
+                            const newDate = baseDate.hour(hours || 0).minute(minutes || 0).toDate();
+                            onTimestampChange(newDate.toISOString());
+                        }}
+                        placeholder="HH:mm"
+                        className="tech-input p-2 w-20 relative focus:border-techCyan text-center"
+                    />
+                </CalendarInput>
+                
+                <label className="flex items-center gap-1 text-sm text-gray-400 font-mono select-none cursor-pointer">
                     <input 
                         type="checkbox" 
                         checked={continueTimestamp} 
                         onChange={(e) => onContinueTimestampChange(e.target.checked)} 
-                        className="form-checkbox h-4 w-4 text-techCyan transition duration-150 ease-in-out border-gray-600 rounded bg-gray-800" // Styled checkbox
+                        className="form-checkbox h-4 w-4 text-techCyan transition duration-150 ease-in-out border-gray-600 rounded bg-gray-800"
                     />
                     CONTINUE
                 </label>

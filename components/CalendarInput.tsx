@@ -1,12 +1,7 @@
-import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
+import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle, ReactNode } from 'react';
 import Calendar from 'react-calendar';
-
 import moment from 'moment';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock } from 'lucide-react';
-
-// Custom CSS for this component (will live in global styles or here as inline for now)
-// Note: Some styles will overlap with global calendar_overrides.css,
-// but specific targeting or inline styles will manage this.
 
 interface CalendarInputProps {
     mode?: 'datetime' | 'date' | 'time';
@@ -15,7 +10,7 @@ interface CalendarInputProps {
     label?: string;
     placeholder?: string;
     className?: string;
-    hideIcon?: boolean; // New prop
+    children?: ReactNode; // New: Allow external trigger
 }
 
 export const CalendarInput = forwardRef(({
@@ -25,205 +20,199 @@ export const CalendarInput = forwardRef(({
     label,
     placeholder,
     className,
-    hideIcon = false // Default to false
+    children
 }: CalendarInputProps, ref) => {
     const [isOpen, setIsOpen] = useState(false);
     const [inputValue, setInputValue] = useState('');
-    const [popupPosition, setPopupPosition] = useState<{ top: number; left: number } | null>(null); // This was added in Step 1
-    const calendarRef = useRef<HTMLDivElement>(null);
-    const inputFocusRef = useRef<HTMLInputElement>(null); // This was added in Step 1
+    const containerRef = useRef<HTMLDivElement>(null);
+    const inputFocusRef = useRef<HTMLInputElement>(null);
+
+    // Scroll refs
+    const hourRef = useRef<HTMLDivElement>(null);
+    const minuteRef = useRef<HTMLDivElement>(null);
 
     useImperativeHandle(ref, () => ({
         focus: () => inputFocusRef.current?.focus(),
         blur: () => inputFocusRef.current?.blur(),
     }));
 
-    useEffect(() => {
-        // Update inputValue when the prop 'value' changes
-        if (value && mode === 'time') {
-            setInputValue(moment(value).format('HH:mm'));
-        } else if (value && (mode === 'date' || mode === 'datetime')) {
-            // For date/datetime, format as appropriate if needed for input type="text"
-            // For now, let the readOnly and picker handle it, keep inputValue for time only
-            setInputValue(moment(value).format(mode === 'date' ? 'YYYY-MM-DD' : 'YYYY-MM-DD HH:mm'));
-        } else {
-            setInputValue('');
-        }
-    }, [value, mode]);
+    const getFormat = () => {
+        if (mode === 'time') return 'HH:mm';
+        if (mode === 'datetime') return 'YYYY-MM-DD HH:mm';
+        return 'YYYY-MM-DD';
+    };
 
+    // Sync internal state only if not using custom children
     useEffect(() => {
-        const calculatePosition = () => {
-            if (inputFocusRef.current && isOpen) {
-                const rect = inputFocusRef.current.getBoundingClientRect();
-                // Position the calendar below the input, accounting for scroll. Add 8px offset for visual separation (similar to mt-2).
-                setPopupPosition({
-                    top: rect.bottom + window.scrollY + 8, // 8px offset below input
-                    left: rect.left + window.scrollX,
-                });
-            } else if (!isOpen) {
-                setPopupPosition(null); // Clear position when closed
+        if (!children) {
+            if (value) {
+                setInputValue(moment(value).format(getFormat()));
+            } else {
+                setInputValue('');
             }
-        };
+        }
+    }, [value, mode, children]);
 
-        calculatePosition(); // Calculate initial position when opened
+    // Auto-scroll logic for time picker
+    useEffect(() => {
+        if (isOpen && (mode === 'time' || mode === 'datetime')) {
+            setTimeout(() => {
+                const currentHour = value ? moment(value).hour() : moment().hour();
+                const currentMinute = value ? moment(value).minute() : moment().minute();
+                
+                if (hourRef.current) hourRef.current.scrollTop = currentHour * 32;
+                if (minuteRef.current) minuteRef.current.scrollTop = currentMinute * 32;
+            }, 10);
+        }
+    }, [isOpen, mode, value]);
 
-        // Add event listeners for scroll and resize to update position dynamically
-        window.addEventListener('scroll', calculatePosition);
-        window.addEventListener('resize', calculatePosition);
-
-        return () => {
-            window.removeEventListener('scroll', calculatePosition);
-            window.removeEventListener('resize', calculatePosition);
-        };
-    }, [isOpen]); // Recalculate when isOpen changes
-
+    // Close on click outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (calendarRef.current && !calendarRef.current.contains(event.target as Node) &&
-                inputFocusRef.current && !inputFocusRef.current.contains(event.target as Node)) {
+            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
                 setIsOpen(false);
             }
         };
-        // Use capture phase to ensure this handler runs before other click handlers that might stop propagation
         document.addEventListener('mousedown', handleClickOutside, true);
         return () => document.removeEventListener('mousedown', handleClickOutside, true);
     }, []);
 
-    const handleCalendarChange = (newDate: Date | Date[]) => {
-        const date = Array.isArray(newDate) ? newDate[0] : newDate;
-        if (mode === 'date' || mode === 'datetime') {
-            const finalDate = value ? moment(value).year(moment(date).year()).month(moment(date).month()).date(moment(date).date()).toDate() : date;
-            onChange(finalDate);
-            if (mode === 'date') setIsOpen(false); // Close if only date is picked
-        } else if (mode === 'time') {
-            // Only update time if in time mode
-            const finalDate = value ? moment(value).hour(moment(date).hour()).minute(moment(date).minute()).toDate() : date;
-            onChange(finalDate);
-        }
+    // Handlers
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.value;
+        setInputValue(val);
+        const format = getFormat();
+        const m = moment(val, format, true);
+        if (m.isValid()) onChange(m.toDate());
+        else if (val === '') onChange(null);
     };
 
-    const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const timeString = e.target.value;
-        setInputValue(timeString); // Update internal input state immediately
-
-        // Attempt to parse if a valid HH:mm or H:m pattern is emerging
-        const timeRegex = /^([01]?[0-9]|2[0-3]):([0-5]?[0-9])$/;
-        if (timeRegex.test(timeString)) {
-            const [hours, minutes] = timeString.split(':').map(Number);
-            const newDate = value ? moment(value).hour(hours).minute(minutes).toDate() : moment().hour(hours).minute(minutes).toDate();
-            onChange(newDate);
-        } else if (timeString === '') {
-            onChange(null); // Allow clearing the time
-        }
-    };
-
-    const displayInput = () => {
-        if (mode === 'time') {
-            return (
-                <input
-                    type="text" // Changed to text
-                    ref={inputFocusRef}
-                    value={inputValue} // Controlled component
-                    onChange={handleTimeChange}
-                    className="tech-input text-sm p-1" // Smaller for time only
-                    placeholder={placeholder || "HH:mm"}
-                    onClick={() => setIsOpen(true)}
-                    onFocus={() => setIsOpen(true)} // Open on focus
-                />
-            );
-        } else {
-            return (
-                <input
-                    type="text"
-                    ref={inputFocusRef}
-                    value={inputValue}
-                    readOnly // Prevent direct typing, use picker
-                    onClick={() => setIsOpen(!isOpen)}
-                    className={`tech-input w-full p-2 ${className}`}
-                    placeholder={placeholder || (mode === 'date' ? "YYYY-MM-DD" : "YYYY-MM-DD HH:mm")}
-                />
-            );
-        }
-    };
-
-    const renderCalendar = () => {
-        // Only render if isOpen is true and popupPosition has been calculated
-        if (!isOpen || !popupPosition) { 
-            return null;
-        }
+    const handleDateChange = (newDate: Date | Date[]) => {
+        const dateRaw = Array.isArray(newDate) ? newDate[0] : newDate;
+        let finalDate = moment(dateRaw);
         
-        const timePicker = (
-            <div className="flex flex-col h-48 overflow-y-auto custom-scrollbar">
-                {Array.from({ length: 24 * 2 }, (_, i) => { // Every 30 minutes
-                    const hour = Math.floor(i / 2);
-                    const minute = (i % 2) * 30;
-                    const time = moment().hour(hour).minute(minute).format('HH:mm');
-                    const isSelected = value && moment(value).hour() === hour && moment(value).minute() === minute;
-                    return (
-                        <div
-                            key={time}
-                            className={`p-2 cursor-pointer hover:bg-white/10 ${isSelected ? 'bg-blue-600 text-white' : 'text-gray-300'}`}
-                            onClick={() => {
-                                const newDate = value ? moment(value).hour(hour).minute(minute).toDate() : moment().hour(hour).minute(minute).toDate();
-                                onChange(newDate);
-                                setIsOpen(false);
-                            }}
-                        >
-                            {time}
-                        </div>
-                    );
-                })}
-            </div>
-        );
+        if (value) {
+            const existing = moment(value);
+            finalDate.hour(existing.hour()).minute(existing.minute());
+        } else {
+            finalDate.hour(moment().hour()).minute(moment().minute());
+        }
+
+        onChange(finalDate.toDate());
+        if (mode === 'date') setIsOpen(false);
+    };
+
+    const handleTimeSelect = (type: 'hour' | 'minute', val: number) => {
+        const base = value ? moment(value) : moment().startOf('day');
+        if (type === 'hour') base.hour(val);
+        if (type === 'minute') base.minute(val);
+        onChange(base.toDate());
+    };
+
+    const renderTimePicker = () => {
+        const currentHour = value ? moment(value).hour() : moment().hour();
+        const currentMinute = value ? moment(value).minute() : moment().minute();
 
         return (
-            <div 
-                ref={calendarRef} 
-                className="tech-panel p-2 shadow-lg w-72" // Keep base styling classes
-                style={{
-                    position: 'fixed', // Use fixed positioning
-                    zIndex: 9999, // Very high z-index to ensure it's on top
-                    top: popupPosition.top,
-                    left: popupPosition.left,
-                }}
-            >
-                {mode === 'time' ? (
-                    timePicker
-                ) : (
-                    <>
-                        <Calendar
-                            onChange={handleCalendarChange}
-                            value={value || new Date()}
-                            view="month"
-                            prevLabel={<ChevronLeft size={16} />}
-                            nextLabel={<ChevronRight size={16} />}
-                            prev2Label={null} // Disable year navigation
-                            next2Label={null} // Disable year navigation
-                            className="react-calendar-input" // Custom class for overrides
-                        />
-                        {(mode === 'datetime') && (
-                            <input
-                                type="time"
-                                value={value ? moment(value).format('HH:mm') : ''}
-                                onChange={handleTimeChange}
-                                className="tech-input mt-2 w-full p-2 text-sm"
-                            />
-                        )}
-                    </>
-                )}
+            <div className="tech-time-container">
+                <div className="tech-time-col border-r border-gray-700" ref={hourRef}>
+                    <div className="tech-time-header">HR</div>
+                    {Array.from({ length: 24 }, (_, i) => (
+                        <div
+                            key={i}
+                            className={`tech-time-item ${i === currentHour ? 'active' : ''}`}
+                            onMouseDown={(e) => { e.preventDefault(); handleTimeSelect('hour', i); }}
+                        >
+                            {String(i).padStart(2, '0')}
+                        </div>
+                    ))}
+                    <div className="h-24 w-full flex-shrink-0"></div>
+                </div>
+
+                <div className="tech-time-col" ref={minuteRef}>
+                    <div className="tech-time-header">MIN</div>
+                    {Array.from({ length: 60 }, (_, i) => (
+                        <div
+                            key={i}
+                            className={`tech-time-item ${i === currentMinute ? 'active' : ''}`}
+                            onMouseDown={(e) => { e.preventDefault(); handleTimeSelect('minute', i); }}
+                        >
+                            {String(i).padStart(2, '0')}
+                        </div>
+                    ))}
+                    <div className="h-24 w-full flex-shrink-0"></div>
+                </div>
             </div>
         );
     };
 
     return (
-        <div className="relative"> {/* This relative container is now just for the label and input */}
-            {label && <label className="block text-gray-400 text-sm mb-1 uppercase font-mono">{label}</label>}
-            <div className="flex items-center gap-2">
-                {!hideIcon && (mode === 'date' || mode === 'datetime' ? <CalendarIcon size={18} className="text-techCyan" /> : <Clock size={18} className="text-techCyan" />)}
-                {displayInput()}
-            </div>
-            {/* The calendar is now rendered outside the flow, but only if isOpen and popupPosition are true */}
-            {isOpen && renderCalendar()} 
+        <div className={`relative ${children ? 'inline-block' : 'w-full'}`} ref={containerRef}>
+            {/* Standard Mode (Input owned by Component) */}
+            {!children && (
+                <>
+                    {label && <label className="block text-gray-400 text-sm mb-1 uppercase font-mono">{label}</label>}
+                    <div className="flex items-center gap-2 relative">
+                        <div 
+                            className="absolute left-3 text-techCyan z-10 cursor-pointer"
+                            onClick={() => setIsOpen(!isOpen)}
+                        >
+                            {mode === 'time' ? <Clock size={16} /> : <CalendarIcon size={16} />}
+                        </div>
+                        <input
+                            ref={inputFocusRef}
+                            type="text"
+                            value={inputValue}
+                            onChange={handleInputChange}
+                            onFocus={() => setIsOpen(true)}
+                            placeholder={placeholder || getFormat()}
+                            className={`tech-input pl-10 pr-3 py-2 text-sm font-mono w-full focus:border-techCyan ${className}`}
+                            autoComplete="off"
+                        />
+                    </div>
+                </>
+            )}
+
+            {/* Custom Mode (Input owned by Parent) */}
+            {children && (
+                <div onClick={() => setIsOpen(true)}>
+                    {children}
+                </div>
+            )}
+
+            {/* Popup */}
+            {isOpen && (
+                <div 
+                    className="tech-picker-popup"
+                    style={{ width: mode === 'time' ? '140px' : '280px' }}
+                >
+                    {(mode === 'date' || mode === 'datetime') && (
+                        <div className="p-2">
+                            <Calendar
+                                onChange={handleDateChange}
+                                value={value || new Date()}
+                                view="month"
+                                prevLabel={<ChevronLeft size={16} />}
+                                nextLabel={<ChevronRight size={16} />}
+                                prev2Label={null}
+                                next2Label={null}
+                                className="react-calendar-input"
+                            />
+                        </div>
+                    )}
+
+                    {(mode === 'time' || mode === 'datetime') && (
+                        <>
+                            {mode === 'datetime' && (
+                                <div className="bg-gray-800/50 text-xs text-center text-gray-500 font-mono py-1 border-y border-gray-700">
+                                    SELECT TIME
+                                </div>
+                            )}
+                            {renderTimePicker()}
+                        </>
+                    )}
+                </div>
+            )}
         </div>
     );
 });

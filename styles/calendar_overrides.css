@@ -409,3 +409,75 @@
     padding: 2em 0.5em;
     color: white;
 }
+
+/* Tech Time Picker Styles */
+.tech-picker-popup {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 4px;
+    z-index: 9999;
+    background-color: #0a0a0a; /* Ensure generic background matches theme */
+    border: 1px solid #374151; /* gray-700 */
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+}
+
+.tech-time-container {
+    display: flex;
+    height: 200px; /* Fixed height for consistency */
+    background-color: #0a0a0a;
+}
+
+.tech-time-col {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* Hide scrollbar but keep functionality */
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+
+.tech-time-col::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+}
+
+.tech-time-item {
+    width: 100%;
+    text-align: center;
+    padding: 6px 0;
+    cursor: pointer;
+    font-family: monospace;
+    font-size: 0.875rem; /* text-sm */
+    color: #9ca3af; /* gray-400 */
+    transition: all 0.2s;
+}
+
+.tech-time-item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: #e5e7eb;
+}
+
+.tech-time-item.active {
+    background-color: rgba(6, 182, 212, 0.2); /* techCyan/20 */
+    color: #22d3ee; /* techCyan */
+    font-weight: bold;
+}
+
+.tech-time-header {
+    position: sticky;
+    top: 0;
+    background-color: #0a0a0a;
+    width: 100%;
+    text-align: center;
+    font-size: 0.75rem;
+    color: #6b7280;
+    border-bottom: 1px solid #374151;
+    padding: 4px 0;
+    z-index: 10;
+}
+
+.memo-input-container .time-controls input.tech-input {
+    width: 100px;
+}
