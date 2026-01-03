@@ -1,4 +1,5 @@
 # NoTaker - Developer Guide
+Note: We got the current "Final 0.9.9-beta" in long-running test currently, we need to make a few final adjustments, backups are too often and not cleared etc. - will upload before end of this week, it's a bit of a hassle to commit to public git since we got an internal git with more open gitignore. But it will come soon.
 
 ## Overview
 
