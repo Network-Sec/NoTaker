@@ -6,6 +6,8 @@ import { fetchUnifiedEvents, CalendarEvent, CalendarSource, fetchCalendarSources
 import type { Event } from '../types';
 import { ChevronLeft, ChevronRight, RefreshCw, Calendar as CalIcon, Settings, Plus } from 'lucide-react';
 
+import { assignGroupedColors } from './CalendarLabelsAndColors';
+
 interface MonthlyCalendarProps {
     events: Event[]; // Legacy prop
     onAddEvent: (event: Omit<Event, 'id'>) => Promise<void>;
@@ -16,17 +18,6 @@ interface MonthlyCalendarProps {
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 const WEEK_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const CELL_HEIGHT = 50; // px per hour slot in week/day view
-
-const RAINBOW_COLORS = [
-    '#FF69B4', // Hot Pink
-    '#FF4500', // OrangeRed
-    '#FFD700', // Gold
-    '#32CD32', // LimeGreen
-    '#1E90FF', // DodgerBlue
-    '#8A2BE2', // BlueViolet
-    '#FF1493', // DeepPink
-    '#00CED1'  // DarkTurquoise
-];
 
 // --- UTILS ---
 const isSameDay = (d1: Date, d2: Date) => moment(d1).isSame(d2, 'day');
@@ -62,8 +53,14 @@ const getEventStyle = (event: CalendarEvent) => {
 
     const startMinutes = start.hours() * 60 + start.minutes();
     
-    // Choose a random rainbow color if event.color is not defined
-    const eventColor = event.color || RAINBOW_COLORS[Math.floor(Math.random() * RAINBOW_COLORS.length)];
+    let eventColor = event.color; // Default to event's color
+    if (!eventColor) {
+        if (event.isExternal) {
+            eventColor = event.sourceColor || '#60a5fa'; // Default blue for external if sourceColor not set
+        } else {
+            eventColor = '#e2e8f0'; // Default light gray for local events
+        }
+    }
 
     return {
         top: `${(startMinutes / 60) * CELL_HEIGHT}px`,
@@ -319,7 +316,8 @@ export const MonthlyCalendar: React.FC<MonthlyCalendarProps> = ({ events: propEv
                 fetchCalendarSources()
             ]);
             
-            setUnifiedEvents(fetchedEvents);
+            const coloredEvents = assignGroupedColors(fetchedEvents);
+            setUnifiedEvents(coloredEvents);
             setCalendarSources(fetchedSources);
             
             // Default: all sources visible

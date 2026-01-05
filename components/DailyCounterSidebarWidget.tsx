@@ -209,22 +209,16 @@ export const DailyCounterSidebarWidget = ({ setMainView }: DailyCounterSidebarWi
                 </div>
             </div>
             
-            <div className="max-h-36 overflow-y-hidden custom-scrollbar"> {/* Limited height for sidebar widget */}
+            <div className="max-h-64 overflow-hidden"> {/* Increased height, no scrollbar */}
                 <table className="w-full text-left text-xs text-gray-400">
                     <thead className="text-[10px] uppercase bg-white/5">
-                        <tr><th scope="col" className="px-1 py-1">Time</th>
-                            <th scope="col" className="px-1 py-1 text-center">Coffee</th>
-                            <th scope="col" className="px-1 py-1 text-center">Milk</th>
-                            <th scope="col" className="px-1 py-1 text-center">TOT Coffee</th>
-                            <th scope="col" className="px-1 py-1 text-center">TOT Milk</th>
-                            <th scope="col" className="px-1 py-1 text-right"></th> {/* For edit button */}
-                        </tr>
+                        <tr><th scope="col" className="px-1 py-1">Time</th><th scope="col" className="px-1 py-1 text-center">Coffee</th><th scope="col" className="px-1 py-1 text-center">Milk</th><th scope="col" className="px-1 py-1 text-center">TOT Coffee</th><th scope="col" className="px-1 py-1 text-center">TOT Milk</th><th scope="col" className="px-1 py-1 text-right"></th> {/* For edit button */}</tr>
                     </thead>
                     <tbody>
-                        {entries.slice(-10).map((entry) => ( // Show only last 10 entries, keeping newest at bottom
+                        {entries.slice(-5).map((entry) => ( // Show only last 5 entries, chronological order
                             <EditableDailyCounterRow key={entry.id} entry={entry} onUpdate={handleUpdateEntry} />
                         ))}
-                        {/* Blank line for new entry */}
+                         {/* Blank line for new entry at BOTTOM */}
                         <tr className="border-b border-white/5 bg-white/5"><td className="px-1 py-1 font-mono">{newEntryTimestamp ? moment(newEntryTimestamp).format('HH:mm') : '--:--'}</td>
                             <td className="px-1 py-1 text-center">
                                 <input 

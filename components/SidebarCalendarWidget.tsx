@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import type { Event } from '../types';
+import { fetchUnifiedEvents, CalendarEvent } from '../services/calendarService';
 import { isSameDay } from '../utils';
+import { Globe, RefreshCw } from 'lucide-react';
 import '../styles/sidebar_calendar_widget.css';
+import { assignTitleBasedColor } from './CalendarLabelsAndColors';
 
 interface SidebarCalendarWidgetProps {
     events: Event[];
@@ -12,11 +15,21 @@ interface SidebarCalendarWidgetProps {
 
 const COLORS = ['#FFD700', '#32CD32', '#FF6347', '#1E90FF']; // Yellow, Green, Red, Blue
 
-const getEventColor = (eventId: number) => {
-    return COLORS[eventId % COLORS.length];
+const getEventColor = (evt: Event | CalendarEvent) => {
+    // If it's a unified event, it might have a color
+    if ('color' in evt && evt.color) {
+        return evt.color;
+    }
+    // Fallback to title based color (consistent with big calendar)
+    // or ID based if title missing
+    if (evt.title) {
+        return assignTitleBasedColor(evt as CalendarEvent).color;
+    }
+
+    return COLORS[(typeof evt.id === 'number' ? evt.id : 0) % COLORS.length];
 };
 
-export const SidebarCalendarWidget = ({ events, onAddEvent, onDayClick, onEventClick }: SidebarCalendarWidgetProps) => {
+export const SidebarCalendarWidget = ({ events: localEvents, onAddEvent, onDayClick, onEventClick }: SidebarCalendarWidgetProps) => {
     // Calculate initial currentBlockStart to place today in the first third (e.g., 4th day)
     const initialBlockStart = useMemo(() => {
         const start = new Date();
@@ -24,15 +37,15 @@ export const SidebarCalendarWidget = ({ events, onAddEvent, onDayClick, onEventC
         return start;
     }, []);
     const [currentBlockStart, setCurrentBlockStart] = useState(initialBlockStart); // Start of the currently displayed 16-day block
+    
+    // External Events State
+    const [showExternal, setShowExternal] = useState(false);
+    const [unifiedEvents, setUnifiedEvents] = useState<CalendarEvent[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
 
     // Calculate the days of the current 16-day block
     const sixteenDayBlock = useMemo(() => {
         const start = new Date(currentBlockStart);
-        // Ensure the start date of the block aligns to a consistent grid point (e.g., always a Sunday)
-        // For 4x4, let's just make it a simple 16-day rolling window starting from currentBlockStart.
-        // If we want it to align to a specific day of the week, this logic needs adjustment.
-        // For simplicity, let's make it 16 days starting from the adjusted currentBlockStart.
-        
         const days = [];
         for (let i = 0; i < 16; i++) { // Generate 16 days
             const day = new Date(start);
@@ -44,9 +57,51 @@ export const SidebarCalendarWidget = ({ events, onAddEvent, onDayClick, onEventC
 
     const today = new Date();
 
+    const loadUnifiedEvents = async () => {
+        setIsLoading(true);
+        try {
+            const data = await fetchUnifiedEvents();
+            setUnifiedEvents(data);
+        } catch (e) {
+            console.error("Failed to load unified events for sidebar", e);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (showExternal && unifiedEvents.length === 0) {
+            loadUnifiedEvents();
+        }
+    }, [showExternal]);
+
+    // Use unified events if toggle is on, otherwise local events
+    const displayEvents = showExternal ? unifiedEvents : localEvents;
+
     return (
         <div className="sidebar-calendar-widget">
-            <h3>Event Calendar</h3>
+            <div className="flex items-center justify-between mb-2">
+                <h3>Event Calendar</h3>
+                <div className="flex items-center gap-1">
+                     <button 
+                        onClick={() => setShowExternal(!showExternal)} 
+                        className={`p-1 rounded transition-colors ${showExternal ? 'text-blue-400 bg-blue-400/10' : 'text-gray-500 hover:text-gray-300'}`}
+                        title={showExternal ? "Hide External Events" : "Show External Events"}
+                    >
+                        <Globe size={14} />
+                    </button>
+                    {showExternal && (
+                        <button 
+                            onClick={loadUnifiedEvents}
+                            className={`p-1 text-gray-400 hover:text-white transition ${isLoading ? 'animate-spin' : ''}`}
+                            title="Refresh External Events"
+                        >
+                            <RefreshCw size={12} />
+                        </button>
+                    )}
+                </div>
+            </div>
+
             <div className="calendar-navigation">
                 <button onClick={() => setCurrentBlockStart(prev => {
                     const newDate = new Date(prev);
@@ -62,7 +117,7 @@ export const SidebarCalendarWidget = ({ events, onAddEvent, onDayClick, onEventC
             </div>
             <div className="calendar-days-grid">
                 {sixteenDayBlock.map(day => {
-                    const dayEvents = events.filter(
+                    const dayEvents = displayEvents.filter(
                         (evt) => isSameDay(new Date(evt.date), day)
                     );
                     const isCurrentDay = isSameDay(day, today);
@@ -80,8 +135,8 @@ export const SidebarCalendarWidget = ({ events, onAddEvent, onDayClick, onEventC
                                         key={evt.id} 
                                         className="event-marker" 
                                         title={evt.title}
-                                        style={{ backgroundColor: getEventColor(evt.id) }}
-                                        onClick={(e) => { e.stopPropagation(); onEventClick(evt); }} // Stop propagation and handle event click
+                                        style={{ backgroundColor: getEventColor(evt as any) }}
+                                        onClick={(e) => { e.stopPropagation(); onEventClick(evt as Event); }} // Stop propagation and handle event click
                                     >
                                         {evt.time}
                                     </div>

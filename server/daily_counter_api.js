@@ -72,32 +72,47 @@ function setupDailyCounterApiRoutes(app, db) {
 
     // Add a new daily entry
     app.post('/api/daily-counter/entries', (req, res) => {
-        const { config_id, date, val1_input, val2_input } = req.body;
+        const { config_id, date, val1_input, val2_input, timestamp } = req.body;
         if (!config_id || !date || (val1_input === undefined) || (val2_input === undefined)) {
             return res.status(400).json({ error: 'config_id, date, val1_input, and val2_input are required' });
         }
-        db.run('INSERT INTO daily_counter_entries (config_id, date, val1_input, val2_input) VALUES (?, ?, ?, ?)',
-            [config_id, date, val1_input, val2_input],
+
+        const entryTimestamp = timestamp || new Date().toISOString();
+
+        db.run('INSERT INTO daily_counter_entries (config_id, date, val1_input, val2_input, timestamp) VALUES (?, ?, ?, ?, ?)',
+            [config_id, date, val1_input, val2_input, entryTimestamp],
             function (err) {
                 if (err) return res.status(500).json({ error: err.message });
-                res.json({ id: this.lastID, config_id, date, val1_input, val2_input, timestamp: new Date().toISOString() });
+                res.json({ id: this.lastID, config_id, date, val1_input, val2_input, timestamp: entryTimestamp });
             }
         );
     });
 
     // Update an existing daily entry
     app.put('/api/daily-counter/entries/:id', (req, res) => {
-        const { date, val1_input, val2_input } = req.body;
+        const { date, val1_input, val2_input, timestamp } = req.body;
         const { id } = req.params;
         if (!id || !date || (val1_input === undefined) || (val2_input === undefined)) {
             return res.status(400).json({ error: 'id, date, val1_input, and val2_input are required' });
         }
-        db.run('UPDATE daily_counter_entries SET date = ?, val1_input = ?, val2_input = ? WHERE id = ?',
-            [date, val1_input, val2_input, id],
+
+        // Build query dynamically based on whether timestamp is provided
+        let query = 'UPDATE daily_counter_entries SET date = ?, val1_input = ?, val2_input = ?';
+        let params = [date, val1_input, val2_input];
+
+        if (timestamp) {
+            query += ', timestamp = ?';
+            params.push(timestamp);
+        }
+
+        query += ' WHERE id = ?';
+        params.push(id);
+
+        db.run(query, params,
             function (err) {
                 if (err) return res.status(500).json({ error: err.message });
                 if (this.changes === 0) return res.status(404).json({ error: 'Entry not found' });
-                res.json({ id, date, val1_input, val2_input, changes: this.changes });
+                res.json({ id, date, val1_input, val2_input, timestamp, changes: this.changes });
             }
         );
     });

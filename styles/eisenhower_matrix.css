@@ -66,6 +66,10 @@
   background-color: #2a3d40; /* Slightly different background for task item */
   padding: 0.2rem 0.4rem;
   border-radius: 3px;
+  font-size: 8px;
+  line-height: 1;
+  word-wrap: break-word;
+  white-space: break-spaces;
 }
 
 /* Applying the provided checkbox styling */

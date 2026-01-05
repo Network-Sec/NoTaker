@@ -2,20 +2,40 @@ const axios = require('axios');
 const ical = require('ical.js');
 const URL = require('url').URL;
 
+// Simple in-memory cache: { url: { data: parsedEvents, timestamp: Date.now() } }
+const icalCache = {};
+const CACHE_TTL = 15 * 60 * 1000; // 15 minutes in milliseconds
+
 /**
- * Fetches and parses iCal data from a given URL.
+ * Fetches and parses iCal data from a given URL with caching.
  * @param {string} icalUrl The URL of the iCal file.
  * @param {string} sourceId The ID of the source (to tag events).
  * @param {string} color The color of the source.
  * @returns {Promise<Array<object>>} A promise that resolves to an array of parsed event objects.
  */
 async function fetchAndParseIcal(icalUrl, sourceId, color, sourceName) {
+    const now = Date.now();
+
+    // 1. Check Cache
+    if (icalCache[icalUrl] && (now - icalCache[icalUrl].timestamp < CACHE_TTL)) {
+        console.log(`[CalendarAPI] Cache HIT for ${sourceName} (${icalUrl})`);
+        // We need to re-map the sourceId/Color just in case they changed in DB but URL is same, 
+        // but typically they stick with the URL. 
+        // For safety, we map the cached events to ensure they have the current sourceId/Color requested.
+        return icalCache[icalUrl].data.map(e => ({
+            ...e,
+            sourceId,
+            sourceName,
+            color
+        }));
+    }
+
+    console.log(`[CalendarAPI] Cache MISS for ${sourceName} (${icalUrl})`);
+
     try {
         // Use axios to fetch the iCal content
         const response = await axios.get(icalUrl, { responseType: 'text' });
         
-        // axios throws on 4xx/5xx by default, so we don't need manual ok check if we catch the error
-        // but just in case of redirect logic or other status codes:
         if (response.status !== 200) {
             console.warn(`Failed to fetch iCal from ${icalUrl}: Status ${response.status}`);
             return [];
@@ -33,14 +53,13 @@ async function fetchAndParseIcal(icalUrl, sourceId, color, sourceName) {
                 // Handle duration/end date
                 let duration = '';
                 if (event.duration) {
-                     // Simple ISO duration handling if needed, or just store raw
                      duration = event.duration.toString();
                 }
 
                 events.push({
                     id: `${sourceId}-${event.uid}`, // Composite ID
                     sourceId: sourceId,
-                    sourceName: sourceName, // Pass source name for UI
+                    sourceName: sourceName, 
                     title: event.summary,
                     date: event.startDate.toJSDate().toISOString(),
                     endDate: event.endDate ? event.endDate.toJSDate().toISOString() : null,
@@ -55,6 +74,13 @@ async function fetchAndParseIcal(icalUrl, sourceId, color, sourceName) {
                 // partial failure is acceptable for external feeds
             }
         });
+
+        // 2. Update Cache
+        icalCache[icalUrl] = {
+            data: events,
+            timestamp: now
+        };
+
         return events;
     } catch (error) {
         console.error(`Error fetching or parsing iCal from ${icalUrl}:`, error.message);
