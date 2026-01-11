@@ -1,0 +1,72 @@
+/* 1. INITIALIZE TAILWIND 4 */
+@import "tailwindcss";
+
+/* 2. FORCE SCANNING (Crucial for WSL/D: Drive structures) */
+@source ".";
+@source "./index.tsx";
+@source "./components/**/*.{ts,tsx}";
+
+/* 3. DEFINE THEME VARIABLES (Prevents calc errors) */
+@theme {
+  --spacing: 0.25rem;
+  --font-sans: 'Inter', ui-sans-serif, system-ui;
+  --font-mono: 'Fira Code', ui-monospace, monospace;
+  --font-display: 'Orbitron', sans-serif; /* For prominent headers/titles */
+  --font-accent: 'Zen Dots', sans-serif;  /* For small, stylized text */
+}
+
+/* 4. LAYER ORDERING */
+/* This tells the browser: "base styles first, then legacy files, then tailwind utilities" */
+@layer base, legacy, utilities;
+
+/* 5. IMPORT ALL LEGACY STYLES INTO THE LOWER-PRIORITY LAYER */
+@layer legacy {
+  @import "./styles/global.css";
+  @import "./styles/sidebar.css";
+  @import "./styles/buttons_inputs.css";
+  @import "./styles/editor_toolbar.css";
+  @import "./styles/misc.css";
+  @import "./styles/dashboard_stream.css";
+  @import "./styles/calendar_tags.css";
+  @import "./styles/eisenhower_matrix.css";
+  @import "./styles/views.css";
+  @import "./styles/tasks.css";
+  @import "./styles/image_editor_modal.css";
+  @import "./styles/unified_stream.css";
+  @import "./styles/monthly_calendar.css";
+  @import "./styles/calendar_overrides.css";
+  @import "./styles/quick_scroll_buttons.css";
+  @import "./styles/identity_view.css";
+  @import "./styles/identity_overview.css";
+  @import "./styles/link_preview.css";
+  @import "./styles/bookmark_view.css";
+  @import "./styles/settings.css";
+  @import "./styles/sidebar_calendar_widget.css";
+  @import "./styles/event_modal.css";
+  @import "./styles/knowledge_graph.css";
+  @import "./styles/global_search.css";
+}
+
+/* 6. GLOBAL RESETS */
+@layer base {
+  *, ::after, ::before {
+    border-color: var(--border-color, currentColor);
+  }
+  
+  body {
+    @apply bg-[#05070a] text-[#a0b3c6];
+  }
+
+  /* Hide number input spinners */
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  input[type="number"] {
+    -moz-appearance: textfield; /* Firefox */
+  }
+}
+
+@import "./styles/block_editor.css";

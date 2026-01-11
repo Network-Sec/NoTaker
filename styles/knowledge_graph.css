@@ -1,0 +1,22 @@
+/* styles/knowledge_graph.css */
+
+.knowledge-graph-container {
+    width: 100%;
+    height: 100%;
+    background-color: var(--bg-color);
+}
+
+/* Node Labels */
+.node-label {
+    font-size: 10px;
+    fill: black;
+    pointer-events: none; /* So that the cursor doesn't ignore the node */
+}
+
+/* Links */
+.graph-link {
+    stroke: var(--text-muted-color);
+    stroke-opacity: 0.6;
+    stroke-width: 1.5px;
+}
+

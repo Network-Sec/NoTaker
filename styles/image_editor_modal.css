@@ -1,0 +1,71 @@
+/* === VIEWS: IMAGE EDITOR MODAL === */
+.image-editor-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.image-editor-modal-content {
+  background-color: var(--surface-color);
+  border-radius: 8px;
+  padding: 1.5rem;
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+} 
+.image-editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+.image-editor-header h2 {
+  font-size: 1.2rem;
+}
+.image-editor-header button {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--text-muted-color);
+  cursor: pointer;
+}
+.image-editor-body {
+  flex-grow: 1;
+  overflow: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.image-crop-container {
+  position: relative;
+  cursor: crosshair;
+  display: inline-block;
+}
+.image-crop-container img {
+  max-width: 100%;
+  max-height: 70vh;
+  user-select: none;
+}
+.crop-selection {
+  position: absolute;
+  border: 2px dashed var(--primary-color);
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+}
+.image-editor-footer {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}

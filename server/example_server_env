@@ -1,0 +1,25 @@
+# Browser Data Paths
+# Firefox - Import not yet implemented
+FIREFOX_WINDOWS_PROFILE_DIR=%APPDATA%\Mozilla\Firefox\Profiles\
+FIREFOX_WINDOWS_PLACES_SQLITE=places.sqlite
+FIREFOX_WINDOWS_FAVICONS_SQLITE=favicons.sqlite
+
+FIREFOX_WSL_PROFILE_DIR=~/.mozilla/firefox/
+FIREFOX_WSL_PLACES_SQLITE=places.sqlite
+FIREFOX_WSL_FAVICONS_SQLITE=favicons.sqlite
+
+# Chrome - Yet only tested from WSL 1 - Ubuntu
+CHROME_WINDOWS_USER_DATA_DIR=%LOCALAPPDATA%\Google\Chrome\User Data\
+CHROME_WSL_USER_DATA_DIR=/mnt/c/Users/<your username>/AppData/Local/Google/Chrome/User Data/
+
+# Make sure to look up and add all profile dir names
+CHROME_PROFILE_NAMES=Default,Guest Profile,Profile 1,Profile 2,Profile 3,Profile 4,System Profile
+
+# Import Interval
+IMPORT_INTERVAL_MINUTES=30
+
+# AI - For local Ollama
+OLLAMA_URL=http://<ip>:<port>
+
+# We recommend - but any model is possible
+OLLAMA_MODEL=gpt-oss:20b

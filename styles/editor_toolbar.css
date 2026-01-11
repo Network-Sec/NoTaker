@@ -1,0 +1,405 @@
+/* =========================================
+   SCI-FI EDITOR & TOOLBAR (UNIFIED)
+   ========================================= */
+
+/* === COMPONENTS: EDITOR & TOOLBAR === */
+.memo-input-container {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border-color);
+  background-color: #212121;
+  flex-shrink: 0;
+}
+.memo-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  position: relative;
+  transition: border-color 0.2s;
+} 
+/* 2. The Editor Wrapper (The Device) */
+.memo-input-wrapper {
+  /* --- Layout Essentials (From Original) --- */
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 800px;
+  padding: 10px 20px;
+  
+  /* --- Visuals (Sci-Fi Theme) --- */
+  background-color: #1a1a1a; /* Lighter surface for contrast */
+  color: #e0e0e0;
+  border: none; /* Removed standard border */
+  border-radius: 0; /* Removed standard radius */
+  
+  /* SHAPE: Cut all 4 corners (Chamfered) */
+  clip-path: polygon(
+      20px 0, calc(100% - 20px) 0, 
+      100% 20px, 100% calc(100% - 20px), 
+      calc(100% - 20px) 100%, 20px 100%, 
+      0 calc(100% - 20px), 0 20px
+  );
+
+  /* BORDER: Inset glow mimics the border inside the cut shape */
+  box-shadow: inset 0 0 0 1px rgba(77, 238, 234, 0.15);
+  transition: box-shadow 0.2s ease;
+
+  /* --- DECORATION: Tech Lines & Accents --- */
+  background-image:
+      /* A. Top Header Line (Cyan Fade) */
+      linear-gradient(90deg, rgba(77, 238, 234, 0.5), transparent 80%),
+      
+      /* B. Corner Diagonals (The "Colored Corners") */
+      /* Top-Left (Cyan) */
+      linear-gradient(135deg, transparent 13px, #4deeea 13px, #4deeea 15px, transparent 15px),
+      /* Top-Right (Cyan) */
+      linear-gradient(225deg, transparent 13px, #4deeea 13px, #4deeea 15px, transparent 15px),
+      /* Bottom-Right (Orange) */
+      linear-gradient(315deg, transparent 13px, #d68c45 13px, #d68c45 15px, transparent 15px),
+      /* Bottom-Left (Orange) */
+      linear-gradient(45deg, transparent 13px, #d68c45 13px, #d68c45 15px, transparent 15px);
+
+  background-repeat: no-repeat;
+  background-size: 
+      /* A */ 100% 1px,
+      /* B */ 30px 30px, 30px 30px, 30px 30px, 30px 30px;
+  background-position: 
+      /* A */ top 0 left 20px,
+      /* B */ top left, top right, bottom right, bottom left;
+}
+
+/* Interactive Glow State */
+.memo-input-wrapper:focus-within {
+  box-shadow: inset 0 0 0 1px rgba(77, 238, 234, 0.5), 
+              inset 0 0 20px rgba(77, 238, 234, 0.1);
+}
+
+/* 3. Toolbar (Header Deck) */
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  
+  /* Visuals */
+  background-color: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid rgba(77, 238, 234, 0.1);
+  
+  /* CRITICAL: Padding ensures buttons aren't cut by clip-path */
+  padding: 8px 25px; 
+}
+
+/* Toolbar Buttons */
+.editor-toolbar button {
+  background: none;
+  border: 1px solid transparent;
+  color: #8daab9; /* Muted tech blue */
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 0; /* Square buttons */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.editor-toolbar button:hover {
+  background-color: rgba(77, 238, 234, 0.1);
+  color: #4deeea;
+  border-color: rgba(77, 238, 234, 0.2);
+}
+
+.editor-toolbar button.active {
+  color: #4deeea;
+  background-color: rgba(77, 238, 234, 0.15);
+  box-shadow: inset 0 0 8px rgba(77, 238, 234, 0.2);
+}
+
+.editor-toolbar button svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+.editor-toolbar .divider {
+  width: 1px;
+  height: 20px;
+  background-color: rgba(77, 238, 234, 0.2);
+  margin: 0 4px;
+}
+
+/* 4. Time Controls (Inside Toolbar) */
+.time-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-right: 8px;
+  border-right: 1px solid rgba(77, 238, 234, 0.2);
+  margin-right: 4px;
+}
+
+.time-controls input[type="time"] {
+  background-color: #050a10;
+  border: 1px solid rgba(77, 238, 234, 0.3);
+  color: #4deeea;
+  border-radius: 0;
+  padding: 4px 9px;
+  margin-right: 20px;
+  font-family: monospace;
+}
+
+.time-controls label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: #8daab9;
+
+}
+
+/* 5. Editor Text Area */
+.memo-editor-area {
+  padding: 15px 25px; /* Side padding matches toolbar to align with straight edges */
+  max-height: 400px;
+  overflow-y: auto;
+  text-align: left;
+  
+  /* Font & Color */
+  color: #fff;
+  background: transparent;
+  font-family: 'Courier New', monospace;
+  line-height: 1.5;
+  min-height: 100px;
+}
+
+/* 6. Footer (Control Deck) */
+.memo-input-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  
+  /* Visuals */
+  border-top: 1px solid rgba(77, 238, 234, 0.1);
+  
+  /* CRITICAL: Padding ensures content isn't cut */
+  padding: 10px 25px; 
+}
+
+/* 7. Tags Area */
+.tag-input-area {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  flex-grow: 1;
+}
+
+.input-tag-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  
+  /* Tech Chip Styling */
+  background-color: rgba(214, 140, 69, 0.1); /* Orange Tint */
+  border: 1px solid rgba(214, 140, 69, 0.3);
+  color: #d68c45;
+  padding: 0.2rem 0.6rem;
+  border-radius: 0; /* Square */
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+  
+  /* Angle cut on right side of chip */
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%);
+}
+
+.input-tag-pill button {
+  background: none;
+  border: none;
+  color: #d68c45;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  font-weight: bold;
+}
+.input-tag-pill button:hover {
+  color: #fff;
+}
+
+.tag-input-field {
+  background: none;
+  border: none;
+  outline: none;
+  color: #8daab9;
+  font-size: 0.9rem;
+  font-family: monospace;
+  flex-grow: 1;
+  min-width: 100px;
+}
+.tag-input-field::placeholder {
+  color: rgba(141, 170, 185, 0.5);
+}
+
+/* 8. Primary Save Button (The "Engage" Trigger) */
+.memo-input-wrapper .primary-button {
+  /* Layout */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.6rem 1.5rem;
+  
+  /* Visuals */
+  background: linear-gradient(135deg, #4deeea, #2bbcb8); /* Cyan Gradient */
+  color: #050a10; /* Dark text for contrast */
+  border: none;
+  border-radius: 0; /* Square */
+  
+  /* Font */
+  font-family: 'Courier New', monospace;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  
+  /* Shape: Chamfered Button */
+  clip-path: polygon(
+      10px 0, 100% 0, 
+      100% calc(100% - 10px), calc(100% - 10px) 100%, 
+      0 100%, 0 10px
+  );
+  
+  transition: all 0.2s ease;
+  box-shadow: 0 0 10px rgba(77, 238, 234, 0.3);
+}
+
+.memo-input-wrapper .primary-button:hover {
+  filter: brightness(1.2);
+  box-shadow: 0 0 20px rgba(77, 238, 234, 0.6);
+  transform: translateY(-1px);
+}
+
+.memo-input-wrapper .primary-button:active {
+  transform: translateY(1px);
+}
+
+/* =========================================
+   SCI-FI TIME CONTROLS & CHECKBOX
+   ========================================= */
+
+.time-controls {
+    display: flex;
+    align-items: center;
+    padding-right: 0;
+    border-right: 1px solid rgba(77, 238, 234, 0.2);
+    margin-right: 8px;
+    height: 100%;
+}
+
+/* --- 1. THE TIME DISPLAY (Fixing the width gap) --- */
+.time-controls input[type="time"] {
+    /* Reset Browser Styles */
+    appearance: none;
+    -webkit-appearance: none;
+    background-color: #050a10; /* Deep black/blue */
+    border: 1px solid rgba(77, 238, 234, 0.4);
+    color: #4deeea; /* Glowing Cyan */
+    margin-right: 4px;
+    /* Font & Layout */
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 0;
+    width: auto; /* Collapse to content width */
+    text-align: center;
+    
+    /* Tech Glow */
+    box-shadow: inset 0 0 5px rgba(77, 238, 234, 0.1);
+    cursor: default;
+}
+
+/* Hides the "weird space" (the default calendar/clock icon) */
+.time-controls input[type="time"]::-webkit-calendar-picker-indicator {
+    display: none;
+}
+
+/* Optional: Focus state if it ever becomes editable */
+.time-controls input[type="time"]:focus {
+    outline: none;
+    border-color: #4deeea;
+    box-shadow: 0 0 8px rgba(77, 238, 234, 0.3);
+}
+
+/* --- 2. THE LABEL --- */
+.time-controls label {
+    display: flex;
+    align-items: center;
+    font-size: 0.85rem;
+    color: #8daab9; /* Muted tech blue */
+    cursor: pointer;
+    user-select: none;
+    font-family: 'Courier New', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: color 0.2s;
+    margin-right: 20px;
+}
+
+.time-controls label:hover {
+    color: #4deeea;
+}
+
+/* --- 3. CUSTOM SCI-FI CHECKBOX --- */
+.time-controls input[type="checkbox"] {
+    /* Hide the default browser checkbox */
+    appearance: none;
+    -webkit-appearance: none;
+    margin: 0;
+    
+    /* Define the new box */
+    width: 28px;
+    height: 28px;
+    background-color: transparent;
+    border: 1px solid rgba(77, 238, 234, 0.5);
+    border-radius: 0; /* Sharp corners */
+    display: grid;
+    place-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-right: 8px;
+    /* Outer glow */
+    box-shadow: 0 0 2px rgba(77, 238, 234, 0.2);
+}
+
+/* Hover State */
+.time-controls input[type="checkbox"]:hover {
+    border-color: #4deeea;
+    box-shadow: 0 0 6px rgba(77, 238, 234, 0.4);
+}
+
+/* Checked State (The "Active" Look) */
+.time-controls input[type="checkbox"]:checked {
+    background-color: rgba(77, 238, 234, 0.15);
+    border-color: #4deeea;
+    box-shadow: 0 0 8px rgba(77, 238, 234, 0.5);
+}
+
+/* The "Checkmark" (A solid glowing square) */
+.time-controls input[type="checkbox"]::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    transform: scale(0); /* Hidden by default */
+    background-color: #4deeea;
+    box-shadow: 0 0 4px #4deeea;
+    transition: transform 0.2s ease-in-out;
+}
+
+.time-controls input[type="checkbox"]:checked::before {
+    transform: scale(1); /* Reveal when checked */
+}
+
+/* --- Custom Override for CalendarInput Icon in MemoInput's Time Controls --- */
+.memo-input-wrapper .editor-toolbar .time-controls .flex.items-center.gap-2 svg[data-lucide="clock"] {
+    display: none !important;
+}

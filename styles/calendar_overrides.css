@@ -1,0 +1,483 @@
+/* styles/calendar_overrides.css */
+
+/* Identity-themed CSS Variables */
+:root {
+    --calendar-bg: #0d1117; /* Background of the full calendar view */
+    --calendar-surface: #161b22; /* Card/panel background for calendar elements */
+    --calendar-border: rgba(255, 255, 255, 0.05); /* Subtle border color (white/5) */
+    --calendar-text-primary: #e2e8f0; /* Light text for main elements */
+    --calendar-text-secondary: #8b949e; /* Muted text for secondary elements */
+    --calendar-text-dim: #6e7681; /* Even dimmer text */
+    --calendar-hover-bg: rgba(22, 27, 34, 0.4); /* Hover background for tiles */
+    --calendar-tech-cyan: #4deeea; /* Accent color */
+    --calendar-tech-cyan-bg-subtle: rgba(77, 238, 234, 0.1); /* Subtle background with techCyan */
+    --calendar-tech-orange: #d68c45; /* Secondary accent color */
+}
+
+/* General overrides for .react-calendar to match sidebar widget container */
+.react-calendar-monthly {
+    width: 100%;
+    height: 100%; /* Make calendar take full height of parent */
+    border: 1px solid var(--calendar-border); 
+    font-family: var(--font-mono, 'Fira Code', monospace); /* Use font-mono */
+    line-height: 1.125em;
+    background-color: var(--calendar-surface) !important; 
+    padding: 0; /* Remove default padding */
+    display: flex; /* Make it a flex container */
+    flex-direction: column; /* Stack children vertically */
+    color: var(--calendar-text-primary) !important; /* Default text color */
+    box-sizing: border-box; /* Crucial for consistent sizing */
+}
+
+/* Navigation */
+.react-calendar-monthly .react-calendar__navigation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem; /* Increased padding */
+    background-color: var(--calendar-bg); /* Use background color */
+    border-bottom: 1px solid var(--calendar-border); 
+    margin-bottom: 0; /* Remove default margin */
+    min-height: 40px; /* Explicit min-height to prevent collapse */
+}
+
+.react-calendar-monthly .react-calendar__navigation button {
+    background: transparent; /* No background by default */
+    border: none;
+    color: var(--calendar-text-secondary) !important; /* Muted color for navigation icons */
+    font-size: 1.2em; /* Increased font size */
+    cursor: pointer;
+    padding: 0.5em 0.8em; /* Increased padding */
+    border-radius: 0; /* No rounded corners */
+    margin-top: 0;
+    transition: all 0.2s; /* Smooth transition */
+}
+
+.react-calendar-monthly .react-calendar__navigation button:hover {
+    background-color: var(--calendar-hover-bg); /* Use hover background */
+    color: var(--calendar-tech-cyan) !important; /* Brighter text on hover */
+}
+
+.react-calendar-monthly .react-calendar__navigation__label {
+    font-weight: 700 !important; /* Make it bold */
+    color: var(--calendar-tech-cyan) !important; /* Primary text color */
+    font-size: 1em; /* Increased font size */
+    cursor: default; /* No pointer on label */
+}
+
+.react-calendar-monthly .react-calendar__navigation__label:hover {
+    background-color: transparent; /* No background on label hover */
+    color: var(--calendar-tech-cyan) !important; /* Maintain primary text color */
+}
+
+.react-calendar-monthly .react-calendar__navigation__arrow {
+    font-size: 1.2em; /* Increased arrow size */
+    color: var(--calendar-text-secondary) !important; /* Muted color for arrows */
+}
+
+.react-calendar-monthly .react-calendar__viewContainer {
+    flex-grow: 1; /* Make view container take all available vertical space */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Target the unnamed div child of viewContainer, often an internal wrapper for the calendar view */
+.react-calendar-monthly .react-calendar__viewContainer > div {
+    height: 100%;
+    display: flex; /* Often needs to be flex to pass height down */
+    flex-direction: column;
+}
+
+.react-calendar-monthly .react-calendar__month-view {
+    flex-grow: 1; /* Make month view take all available vertical space */
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* Ensure it takes full height */
+}
+
+/* Month view (days grid) */
+.react-calendar-monthly .react-calendar__month-view__weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr); /* 7 days per row */
+    text-align: center;
+    background-color: var(--calendar-bg); /* Use background color */
+    border-bottom: 1px solid var(--calendar-border);
+}
+
+.react-calendar-monthly .react-calendar__month-view__weekdays abbr {
+    text-decoration: none;
+    font-weight: bold !important;
+    color: var(--calendar-text-secondary) !important; /* Muted color for weekdays */
+    font-size: 1.0em; /* Increased font size */
+    padding: 5px 0;
+}
+
+.react-calendar-monthly .react-calendar__month-view__days {
+    display: grid !important; /* Force grid display */
+    grid-template-columns: repeat(7, 1fr) !important; /* 7 columns for month view */
+    grid-template-rows: repeat(6, 1fr); /* Distribute height evenly across 6 rows */
+    gap: 0; /* No gap between cells */
+    width: 100%;
+    flex-grow: 1; /* Make days grid take all available vertical space */
+}
+
+.react-calendar-monthly .react-calendar__tile {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+    background-color: transparent !important; /* Default transparent */
+    border: 1px solid var(--calendar-border); /* Subtle border for each tile */
+    border-radius: 0; /* No rounded corners */
+    cursor: pointer; /* Changed to pointer */
+    transition: background-color 0.2s;
+    position: relative;
+    padding: 2px;
+    box-sizing: border-box;
+    overflow: hidden;
+    max-width: none; /* Override max-width */
+    color: var(--calendar-text-primary) !important; /* Default day text color */
+}
+
+.react-calendar-monthly .react-calendar__tile--neighboringMonth {
+    color: var(--calendar-text-dim); /* Dim days from neighboring months */
+    background-color: var(--calendar-hover-bg); /* Different background for neighboring months */
+}
+
+.react-calendar-monthly .react-calendar__tile:hover,
+.react-calendar-monthly .react-calendar__tile:enabled:focus {
+    background-color: var(--calendar-hover-bg); /* Match sidebar hover */
+    border-radius: 0; /* No rounded corners on hover */
+}
+
+.react-calendar-monthly .react-calendar__tile--now {
+    border: 1px solid var(--calendar-tech-cyan); /* TechCyan border for current day */
+    box-shadow: none;
+    background-color: var(--calendar-tech-cyan-bg-subtle); /* Subtle background for current day */
+    color: var(--calendar-text-primary) !important;
+}
+
+.react-calendar-monthly .react-calendar__tile--now:hover,
+.react-calendar-monthly .react-calendar__tile--now:enabled:focus {
+    background-color: var(--calendar-hover-bg);
+}
+
+.react-calendar-monthly .react-calendar__tile--active {
+    background-color: var(--calendar-tech-cyan); /* Solid techCyan for active day */
+    border: 1px solid var(--calendar-tech-cyan); /* Match border to background */
+    box-shadow: none;
+    color: #000 !important; /* Ensure text is readable on techCyan */
+    font-weight: bold;
+}
+
+.react-calendar-monthly .react-calendar__tile--active:hover,
+.react-calendar-monthly .react-calendar__tile--active:enabled:focus {
+    background-color: var(--calendar-tech-cyan); /* Solid techCyan for active day */
+}
+
+/* Specific styling for when a tile is both "now" and "active" */
+.react-calendar-monthly .react-calendar__tile--now.react-calendar__tile--active {
+    color: #000 !important; /* Text color for active+now */
+    background-color: var(--calendar-tech-cyan) !important; /* Background for active+now */
+    border: 1px solid var(--calendar-tech-cyan) !important; /* Maintain techCyan border */
+}
+
+/* Day number inside tile */
+.react-calendar-monthly .react-calendar__month-view__days__day > abbr {
+    font-size: 1.1em; /* Increased font size */
+    color: var(--calendar-text-primary) !important; /* Primary text color for day number */
+    margin: 4px; /* Increased margin */
+    position: static;
+    font-weight: 500;
+}
+
+/* Event Bars Container */
+.react-calendar-monthly .event-bars {
+    position: relative; /* Changed to relative for absolute children */
+    display: flex; /* Keep flex for original stacking if needed */
+    flex-direction: column; /* Stack event bars vertically */
+    gap: 2px; /* Small gap between event bars */
+    margin-top: 4px; 
+    width: 100%;
+    flex-grow: 1; /* Allow event bars container to take height */
+}
+
+/* Individual Event Bar */
+.react-calendar-monthly .event-bar {
+    position: absolute; /* Changed to absolute for horizontal positioning */
+    top: 0; /* Position at the top of the event-bars container */
+    height: 100%; /* Take full height of the parent event-bars */
+    border-radius: 0; /* No rounded corners, make it square */
+    padding: 2px 4px; /* Adjusted padding for smaller width */
+    font-size: 0.7em; /* Adjusted font size for smaller width */
+    color: white !important; /* Events are always white text */
+    text-align: left;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis; /* Truncate long titles */
+    box-sizing: border-box;
+    cursor: pointer; /* Indicate clickability */
+    line-height: 1.1; /* Adjust line height for readability */
+    background-color: var(--calendar-tech-cyan-bg-subtle); /* Default subtle background */
+    border: 1px solid var(--calendar-tech-cyan); /* Default subtle border */
+}
+
+.react-calendar-monthly .event-bar span:first-child {
+    font-weight: bold; /* Make time bold */
+    margin-right: 2px; /* Space between time and title */
+    color: var(--calendar-tech-orange) !important; /* Time in techOrange */
+}
+
+.react-calendar-monthly .event-bar.overflow-indicator {
+    background-color: var(--calendar-hover-bg); /* Use hover bg for overflow */
+    border: 1px dashed var(--calendar-text-dim); /* Dashed border */
+    color: var(--calendar-text-dim) !important; /* Dim text */
+    text-align: center;
+    font-style: italic;
+    opacity: 0.8;
+}
+
+/* --- CalendarInput specific overrides --- */
+.react-calendar-input {
+    width: 100%;
+    border: 1px solid var(--calendar-border); 
+    font-family: var(--font-mono, 'Fira Code', monospace);
+    line-height: 1.125em;
+    background-color: var(--calendar-surface) !important; 
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    color: var(--calendar-text-primary) !important;
+    box-sizing: border-box; /* Crucial for consistent sizing */
+}
+
+.react-calendar-input .react-calendar__navigation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem;
+    background-color: var(--calendar-bg);
+    border-bottom: 1px solid var(--calendar-border);
+    margin-bottom: 0;
+    min-height: 36px; /* Slightly smaller navigation for input */
+}
+
+.react-calendar-input .react-calendar__navigation button {
+    background: transparent;
+    border: none;
+    color: var(--calendar-text-secondary) !important;
+    font-size: 1.0em; /* Smaller font size */
+    cursor: pointer;
+    padding: 0.3em 0.5em; /* Smaller padding */
+    border-radius: 0;
+    margin-top: 0;
+    transition: all 0.2s;
+}
+
+.react-calendar-input .react-calendar__navigation button:hover {
+    background-color: var(--calendar-hover-bg);
+    color: var(--calendar-tech-cyan) !important;
+}
+
+.react-calendar-input .react-calendar__navigation__label {
+    font-weight: 700 !important;
+    color: var(--calendar-tech-cyan) !important;
+    font-size: 0.9em; /* Smaller font size */
+    cursor: default;
+}
+.react-calendar-input .react-calendar__navigation__label:hover {
+    background-color: transparent;
+    color: var(--calendar-tech-cyan) !important;
+}
+
+.react-calendar-input .react-calendar__navigation__arrow {
+    font-size: 1.0em; /* Smaller arrow size */
+    color: var(--calendar-text-secondary) !important;
+}
+
+.react-calendar-input .react-calendar__month-view__weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    background-color: var(--calendar-bg);
+    border-bottom: 1px solid var(--calendar-border);
+}
+
+.react-calendar-input .react-calendar__month-view__weekdays abbr {
+    text-decoration: none;
+    font-weight: bold;
+    color: var(--calendar-text-dim) !important; /* Dimmer text for weekdays */
+    font-size: 0.8em; /* Smaller font size */
+    padding: 3px 0;
+}
+
+.react-calendar-input .react-calendar__month-view__days {
+    display: grid !important;
+    grid-template-columns: repeat(7, 1fr) !important;
+    grid-template-rows: repeat(6, 1fr);
+    gap: 0;
+    width: 100%;
+    flex-grow: 1;
+}
+
+.react-calendar-input .react-calendar__tile {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+    background-color: transparent !important;
+    border: 1px solid var(--calendar-border);
+    border-radius: 0;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    position: relative;
+    padding: 1px; /* Smaller padding */
+    box-sizing: border-box;
+    overflow: hidden;
+    max-width: none;
+    color: var(--calendar-text-primary) !important;
+    font-size: 0.9em;
+}
+
+.react-calendar-input .react-calendar__tile--neighboringMonth {
+    color: var(--calendar-text-dim);
+    background-color: var(--calendar-hover-bg);
+}
+
+.react-calendar-input .react-calendar__tile:hover,
+.react-calendar-input .react-calendar__tile:enabled:focus {
+    background-color: var(--calendar-hover-bg);
+    border-radius: 0;
+}
+
+.react-calendar-input .react-calendar__tile--now {
+    border: 1px solid var(--calendar-tech-cyan);
+    background-color: var(--calendar-tech-cyan-bg-subtle);
+    color: var(--calendar-text-primary) !important;
+}
+
+.react-calendar-input .react-calendar__tile--now:hover,
+.react-calendar-input .react-calendar__tile--now:enabled:focus {
+    background-color: var(--calendar-hover-bg);
+}
+
+.react-calendar-input .react-calendar__tile--active {
+    background-color: var(--calendar-tech-cyan);
+    border: 1px solid var(--calendar-tech-cyan);
+    color: #000 !important;
+    font-weight: bold;
+}
+
+.react-calendar-input .react-calendar__tile--active:hover,
+.react-calendar-input .react-calendar__tile--active:enabled:focus {
+    background-color: var(--calendar-tech-cyan);
+}
+
+.react-calendar-input .react-calendar__tile--now.react-calendar__tile--active {
+    color: #000 !important;
+    background-color: var(--calendar-tech-cyan) !important;
+    border: 1px solid var(--calendar-tech-cyan) !important;
+}
+
+.react-calendar-input .react-calendar__month-view__days__day > abbr {
+    font-size: 1.0em;
+    color: var(--calendar-text-primary) !important;
+    margin: 2px;
+    position: static;
+    font-weight: 500;
+}
+
+/* Time input styling within CalendarInput */
+.react-calendar-input input[type="time"] {
+    background-color: var(--calendar-bg);
+    border: 1px solid var(--calendar-border);
+    color: var(--calendar-text-primary);
+    font-family: var(--font-mono, 'Fira Code', monospace);
+    padding: 0.5rem;
+    border-radius: 0;
+    -webkit-appearance: none; /* Remove default styling */
+    appearance: none;
+}
+.react-calendar-input input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(1); /* Keep default icon visible in dark mode */
+}
+
+/* Adjustments for different views (year, decade, century) if needed */
+.react-calendar-monthly .react-calendar__year-view .react-calendar__tile,
+.react-calendar-monthly .react-calendar__decade-view .react-calendar__tile,
+.react-calendar-monthly .react-calendar__century-view .react-calendar__tile {
+    padding: 2em 0.5em;
+    color: white;
+}
+
+/* Tech Time Picker Styles */
+.tech-picker-popup {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 4px;
+    z-index: 9999;
+    background-color: #0a0a0a; /* Ensure generic background matches theme */
+    border: 1px solid #374151; /* gray-700 */
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+}
+
+.tech-time-container {
+    display: flex;
+    height: 200px; /* Fixed height for consistency */
+    background-color: #0a0a0a;
+}
+
+.tech-time-col {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* Hide scrollbar but keep functionality */
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+
+.tech-time-col::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+}
+
+.tech-time-item {
+    width: 100%;
+    text-align: center;
+    padding: 6px 0;
+    cursor: pointer;
+    font-family: monospace;
+    font-size: 0.875rem; /* text-sm */
+    color: #9ca3af; /* gray-400 */
+    transition: all 0.2s;
+}
+
+.tech-time-item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: #e5e7eb;
+}
+
+.tech-time-item.active {
+    background-color: rgba(6, 182, 212, 0.2); /* techCyan/20 */
+    color: #22d3ee; /* techCyan */
+    font-weight: bold;
+}
+
+.tech-time-header {
+    position: sticky;
+    top: 0;
+    background-color: #0a0a0a;
+    width: 100%;
+    text-align: center;
+    font-size: 0.75rem;
+    color: #6b7280;
+    border-bottom: 1px solid #374151;
+    padding: 4px 0;
+    z-index: 10;
+}
+
+.memo-input-container .time-controls input.tech-input {
+    width: 100px;
+}

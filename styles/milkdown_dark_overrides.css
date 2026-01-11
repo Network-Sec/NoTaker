@@ -1,0 +1,29 @@
+/* Custom Dark Mode Overrides for Crepe Theme */
+.milkdown {
+  /* Background Colors */
+  --crepe-color-background: #1e1e1e; /* Dark main background color */
+  --crepe-color-surface: #252525; /* Dark surface color for cards/panels */
+  --crepe-color-surface-low: #2d2d2d; /* Darker surface color for depth */
+
+  /* Text Colors */
+  --crepe-color-on-background: #e0e0e0; /* Light text color on dark background */
+  --crepe-color-on-surface: #f0f0f0; /* Light text color on dark surface */
+  --crepe-color-on-surface-variant: #b0b0b0; /* Secondary light text color */
+
+  /* Accent Colors (adjust as needed for dark theme) */
+  --crepe-color-primary: #9bb7d4; /* Adjusted primary brand color for dark */
+  --crepe-color-secondary: #3a5c80; /* Adjusted secondary accent color for dark */
+  --crepe-color-on-secondary: #e0e0e0; /* Light text on dark secondary */
+
+  /* UI Colors */
+  --crepe-color-outline: #555555; /* Darker border/outline color */
+  --crepe-color-inverse: #fcefe2; /* Inverse color for contrast (light) */
+  --crepe-color-on-inverse: #362f27; /* Text color on inverse (dark) */
+  --crepe-color-inline-code: #d46a6a; /* Adjusted inline code color for dark */
+  --crepe-color-error: #d46a6a; /* Adjusted error state color for dark */
+
+  /* Interactive Colors */
+  --crepe-color-hover: #333333; /* Darker hover state color */
+  --crepe-color-selected: #444444; /* Darker selected state color */
+  --crepe-color-inline-area: #3a3a3a; /* Darker inline editing area color */
+}

@@ -1,0 +1,11 @@
+{
+  "firefox": {},
+  "chrome": {},
+  "ai": {},
+  "general": {
+    "importInterval": 30,
+    "darkMode": false,
+    "autoScroll": true
+  },
+  "generic": {}
+}

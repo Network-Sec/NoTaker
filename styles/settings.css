@@ -1,0 +1,194 @@
+/* styles/settings.css */
+
+.settings-view {
+    padding: 20px;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    min-height: calc(100vh - 80px); /* Adjust based on header/footer height */
+}
+
+.settings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 15px;
+}
+
+.settings-header h1 {
+    color: var(--text-color-primary);
+    margin: 0; /* Remove default h1 margin */
+    font-size: 2em;
+}
+
+.settings-section {
+    background-color: var(--secondary-background-color);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 25px;
+    box-shadow: var(--shadow-light);
+}
+
+.settings-section h2 {
+    color: var(--text-color-primary);
+    font-size: 1.5em;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border-color-light);
+    padding-bottom: 10px;
+}
+
+.setting-item, .setting-item-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    gap: 15px; /* Space between label and input */
+}
+
+.setting-item-row {
+    justify-content: space-between; /* Push label and toggle to opposite ends */
+}
+
+/* New style for the label containing the toggle switch */
+.toggle-switch-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Space out the text and the actual toggle switch */
+    flex-grow: 1; /* Allow it to take up available space */
+    cursor: pointer; /* Indicate it's clickable */
+    color: var(--text-color);
+    font-weight: 500;
+    font-size: 1.0em;
+}
+
+.toggle-switch-label span { /* Style for the text part of the label */
+    flex-grow: 1;
+    text-align: left;
+}
+
+.setting-item label, .setting-item-row label {
+    flex-shrink: 0; /* Prevent label from shrinking */
+    min-width: 180px; /* Give labels a consistent width */
+    color: var(--text-color);
+    font-weight: 500;
+    font-size: 1.0em;
+}
+
+.setting-item input[type="text"],
+.setting-item input[type="number"] {
+    flex-grow: 1; /* Input takes remaining space */
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background-color: var(--input-background-color);
+    color: var(--input-text-color);
+    font-size: 0.95em;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.setting-item input[type="text"]:focus,
+.setting-item input[type="number"]:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 2px var(--accent-color-transparent);
+    outline: none;
+}
+
+.setting-description {
+    font-size: 0.85em;
+    color: var(--text-color-secondary);
+    margin-top: -10px; /* Pull description closer to the input */
+    margin-left: calc(180px + 15px); /* Align with input */
+    margin-bottom: 15px;
+}
+
+/* Specific grid for two-column settings */
+.setting-grid-two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Two equal columns */
+    gap: 1rem; /* Gap between columns */
+    margin-bottom: 15px; /* Space after the grid */
+}
+
+.setting-grid-two-col .setting-item {
+    margin-bottom: 0; /* No bottom margin for items inside the grid */
+    flex-direction: column; /* Stack label and input vertically within grid item */
+    align-items: flex-start; /* Align label to start */
+}
+
+.setting-grid-two-col .setting-item label {
+    min-width: unset; /* Remove min-width constraint for grid labels */
+    margin-bottom: 5px; /* Space between label and input in grid */
+}
+
+
+/* Toggle Switch Styling (from existing patterns) */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 60px; /* Updated from 40px */
+    height: 34px; /* Updated from 24px */
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--toggle-off-background);
+    -webkit-transition: .4s;
+    transition: .4s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 26px; /* Updated from 16px */
+    width: 26px; /* Updated from 16px */
+    left: 4px;
+    bottom: 4px;
+    background-color: var(--toggle-handle-color);
+    -webkit-transition: .4s;
+    transition: .4s;
+}
+
+input:checked + .slider {
+    background-color: var(--toggle-on-background);
+}
+
+input:focus + .slider {
+    box-shadow: 0 0 1px var(--toggle-on-background);
+}
+
+input:checked + .slider:before {
+    -webkit-transform: translateX(26px); /* Updated from 16px */
+    -ms-transform: translateX(26px); /* Updated from 16px */
+    transform: translateX(26px); /* Updated from 16px */
+}
+
+/* Rounded sliders */
+.slider.round {
+    border-radius: 34px; /* Updated from 24px */
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}
+
+.settings-actions {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color-light);
+    text-align: right;
+}
+
+.primary-button { /* Re-using existing button styles */
+    /* Defined in buttons_inputs.css */
+}

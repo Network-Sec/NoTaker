@@ -1,0 +1,44 @@
+.quick-scroll-buttons {
+  margin-top: 15px;
+  /* Removed flex-direction: column here, as the only child is flex-row */
+  gap: 0; /* No gap needed on the main container itself */
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+  width: fit-content; /* Adjust width to content */
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.quick-scroll-buttons .button-groups-wrapper {
+  display: flex;
+  flex-direction: row; /* Arrange the button columns side-by-side */
+  gap: 8px; /* Space between the button columns */
+  justify-content: center; /* Center the entire group of buttons */
+}
+
+.quick-scroll-buttons .flex-column {
+  display: flex;
+  flex-direction: column; /* Arrange buttons within each pair one above the other */
+  gap: 5px; /* Space between buttons in a pair */
+}
+
+.quick-scroll-buttons button {
+  background-color: transparent;
+  color: white;
+  border: 1px solid #555;
+  padding: 4px 8px;
+  border-radius: 0;
+  cursor: pointer;
+  font-size: 0.7em;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+  text-align: center;
+  /* flex-grow: 1; -> Removed as it might make buttons too wide in a column */
+  /* min-width: 0; -> Removed */
+}
+
+.quick-scroll-buttons button:hover {
+  background-color: #555;
+  border-color: #777;
+  color: #fff;
+}

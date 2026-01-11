@@ -1,0 +1,141 @@
+/* === WIDGET: EISENHOWER MATRIX === */
+.eisenhower-matrix-container {
+  margin-top: 0;
+  padding-top: 1.5rem;
+  border-top: none;
+}
+.eisenhower-matrix-container h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+.eisenhower-matrix {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 0.75rem;
+  aspect-ratio: 1 / 1;
+} 
+.matrix-quadrant {
+  background-color: #1c3033;
+  border-radius: 0;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-top: 3px solid;
+  transition: background-color 0.2s;
+}
+.matrix-quadrant[data-quadrant="important-urgent"] {
+  border-color: var(--quadrant-1-color);
+}
+.matrix-quadrant[data-quadrant="important-not-urgent"] {
+  border-color: var(--quadrant-2-color);
+}
+.matrix-quadrant[data-quadrant="unimportant-urgent"] {
+  border-color: var(--quadrant-3-color);
+}
+.matrix-quadrant[data-quadrant="unimportant-not-urgent"] {
+  border-color: var(--quadrant-4-color);
+}
+.quadrant-title {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-align: center;
+  color: var(--text-muted-color);
+  padding-bottom: 0.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.quadrant-task-list {
+  list-style: none; /* Remove default list style */
+  padding-left: 0; /* Remove default padding */
+  flex-grow: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+}
+
+.eisenhower-task-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #2a3d40; /* Slightly different background for task item */
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+}
+
+/* Applying the provided checkbox styling */
+.eisenhower-task-item input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    margin: 0;
+    width: 12px; /* Adjusted size to 12px */
+    height: 12px; /* Adjusted size to 12px */
+    background-color: transparent;
+    border: 1px solid rgba(77, 238, 234, 0.5); /* Keep original border for checkbox outline */
+    border-radius: 0;
+    display: grid;
+    place-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-right: 8px;
+    box-shadow: 0 0 2px rgba(77, 238, 234, 0.2); /* Keep original box-shadow for checkbox outline glow */
+}
+
+.eisenhower-task-item input[type="checkbox"]::before {
+    content: "";
+    width: 6px; /* Size of the dot */
+    height: 6px; /* Size of the dot */
+    border-radius: 50%; /* Make it circular */
+    transform: scale(0);
+    transition: 120ms transform ease-in-out;
+    background-color: rgb(77, 238, 234); /* Corrected: Glowing dot color */
+}
+
+.eisenhower-task-item input[type="checkbox"]:checked::before {
+    transform: scale(1);
+    box-shadow: 0 0 5px 2px rgba(77, 238, 234, 0.7); /* Glowing effect for the dot */
+}
+
+
+.eisenhower-task-item.completed-task span {
+    text-decoration: line-through;
+    color: var(--text-muted-color);
+}
+
+.delete-task-btn {
+  background: none;
+  border: none;
+  color: #ff6b6b; /* Red color for delete */
+  font-size: 0.8em;
+  cursor: pointer;
+  padding: 0 0.2em;
+  opacity: 0.7;
+  transition: opacity 0.2s, color 0.2s;
+}
+
+.delete-task-btn:hover {
+  opacity: 1;
+  color: #ff3838;
+}
+
+.quadrant-add-task input, .edit-task-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 0.85rem;
+  padding: 0.25rem 0;
+  margin-top: 0.25rem;
+  border-top: 1px solid var(--border-color);
+  color: inherit; /* Ensure text color is inherited */
+}
+
+.edit-task-input {
+    border-bottom: 1px dashed var(--accent-color); /* Visual cue for editing */
+    padding: 0 0.25rem; /* Add some padding to the input */
+}

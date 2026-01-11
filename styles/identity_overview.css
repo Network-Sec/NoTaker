@@ -1,0 +1,167 @@
+/* --- IDENTITY OVERVIEW STYLES --- */
+/* Extracted from extDev/styles.css but without global resets to avoid conflicts */
+
+/* --- CUSTOM SCROLLBAR (Specific to this view or globally accepted) --- */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #05070a; 
+}
+::-webkit-scrollbar-thumb {
+  background: #1f2937; 
+  border: 1px solid #05070a;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #4deeea; 
+}
+
+/* --- FUTURISTIC UI COMPONENT CLASSES --- */
+
+/* 1. Tech Panel (Cards/Containers) */
+.tech-panel {
+  position: relative;
+  background-color: rgba(13, 17, 23, 0.7);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  
+  /* Corner Accents - Hardcoded colors to match theme */
+  background-image: 
+      linear-gradient(to left, #4deeea 1px, transparent 1px),
+      linear-gradient(to bottom, #4deeea 1px, transparent 1px),
+      linear-gradient(to left, #d68c45 1px, transparent 1px),
+      linear-gradient(to top, #d68c45 1px, transparent 1px);
+
+  background-repeat: no-repeat;
+  background-size: 8px 8px; 
+  background-position: top 0 right 0, top 0 right 0, bottom 0 right 0, bottom 0 right 0;
+  transition: all 0.2s ease-in-out;
+}
+
+.tech-panel:hover {
+  border-color: rgba(77, 238, 234, 0.4);
+  box-shadow: 0 0 15px rgba(77, 238, 234, 0.15);
+}
+
+/* 2. Tech List Item (Sidebar/List) */
+.tech-item {
+    position: relative;
+    display: flex;
+    width: 100%;
+    padding: 12px 16px 12px 24px; 
+    margin-bottom: 4px;
+    background-color: rgba(22, 27, 34, 0.4);
+    border: 1px solid transparent; 
+    border-left: none; 
+    color: #8b949e;
+    font-size: 0.875rem; /* 14px */
+    transition: all 0.2s ease;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+/* The vertical bar on the left */
+.tech-item::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    top: 0;
+    width: 4px; 
+    background-color: #30363d;
+    transition: background-color 0.2s, width 0.2s;
+    z-index: 2;
+}
+
+/* Hover & Active States */
+.tech-item:hover, .tech-item.active {
+    background: linear-gradient(90deg, rgba(77, 238, 234, 0.08) 0%, transparent 100%);
+    color: #e2e8f0;
+}
+
+.tech-item:hover::before, .tech-item.active::before {
+    width: 12px;
+    background-color: #d68c45; /* Orange */
+    /* Clip path for the angled HUD shape */
+    clip-path: polygon(
+        0 100%, 
+        2px 100%, 
+        2px 50%, 
+        12px 0, 
+        10px 0, 
+        0 50%
+    );
+}
+
+.tech-item.active::before {
+    background-color: #4deeea; /* Cyan */
+}
+
+/* 3. Tech Input Fields */
+.tech-input {
+  background-color: #05070a;
+  border: 1px solid #30363d;
+  color: #4deeea;
+  font-family: 'Consolas', 'Monaco', monospace;
+  width: 100%;
+}
+.tech-input:focus {
+  border-color: #4deeea;
+  box-shadow: 0 0 0 1px rgba(77, 238, 234, 0.2);
+  outline: none;
+}
+
+/* 4. Tech Buttons */
+.tech-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(77, 238, 234, 0.1);
+  border: 1px solid rgba(77, 238, 234, 0.3);
+  color: #4deeea;
+  text-transform: uppercase;
+  font-size: 0.75rem; /* 12px */
+  letter-spacing: 0.1em;
+  font-weight: 600;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.tech-btn:hover {
+  background-color: rgba(77, 238, 234, 0.2);
+  box-shadow: 0 0 12px rgba(77, 238, 234, 0.4);
+  text-shadow: 0 0 5px rgba(77, 238, 234, 0.8);
+  border-color: #4deeea;
+}
+
+/* Secondary Button Variant */
+.tech-btn-secondary {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #8b949e;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.tech-btn-secondary:hover {
+  border-color: #d68c45;
+  color: #d68c45;
+  background-color: rgba(214, 140, 69, 0.1);
+}
+
+/* Utility: Custom Font Helpers if Tailwind misses them */
+.font-mono-custom {
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+}

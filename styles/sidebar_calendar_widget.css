@@ -1,0 +1,104 @@
+.sidebar-calendar-widget {
+    margin: 0;
+    margin-top: 20px;
+    border: 1px solid var(--border-color);
+    padding: 0;
+    background-color: var(--surface-color);
+}
+
+.sidebar-calendar-widget h3 {
+    padding: 10px;
+}
+
+.sidebar-calendar-widget .calendar-navigation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.2rem; /* Reduced padding for navigation */
+    background-color: var(--bg-color); /* Slightly different background for header */
+    border-bottom: 1px solid var(--border-color);
+}
+
+.sidebar-calendar-widget .calendar-navigation button {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    font-size: 1em; /* Smaller font size */
+    cursor: pointer;
+    padding: 0.2em 0.4em; /* Reduced padding */
+    border-radius: 3px;
+}
+
+.sidebar-calendar-widget .calendar-navigation button:hover {
+    background-color: var(--bg-hover-color);
+}
+
+.sidebar-calendar-widget .calendar-navigation span {
+    font-weight: 500;
+    color: var(--text-color);
+    font-size: 0.9em; /* Smaller font size */
+}
+
+.sidebar-calendar-widget .calendar-days-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* 4 days per row */
+    gap: 0px; /* No margin between days */
+    border-top: 0px; /* Remove top border of grid if any */
+}
+
+.sidebar-calendar-widget .day-cell {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start; /* Align content to top */
+    align-items: flex-start; /* Align content to left */
+    height: 4em; /* Make day cells slightly taller for rectangular shape */
+    background-color: var(--bg-color);
+    border: 1px solid var(--border-color); /* Subtle border for each day cell */
+    border-radius: 0px; /* No rounded corners for day cells */
+    cursor: grab; /* Changed cursor for day cell */
+    transition: background-color 0.2s;
+    position: relative;
+    padding: 2px; /* Small padding inside day cell */
+    box-sizing: border-box; /* Include padding in cell's total width and height */
+    overflow: hidden; /* Hide overflowing event markers */
+}
+
+
+.sidebar-calendar-widget .day-cell:hover {
+    background-color: var(--bg-hover-color);
+}
+
+.sidebar-calendar-widget .day-number {
+    font-size: 0.8em; /* Adjusted font size */
+    color: var(--text-muted-color);
+    position: static; /* Let it flow normally */
+    margin: 2px; /* Small margin around day number */
+}
+
+.sidebar-calendar-widget .current-day {
+    border-color: var(--primary-color); /* Highlight current day */
+    box-shadow: inset 0 0 0 1px var(--primary-color); /* Inner shadow for border */
+}
+
+.sidebar-calendar-widget .event-markers {
+    position: static; /* Let it flow normally below day number */
+    display: flex;
+    flex-direction: column; /* Stack event blocks vertically */
+    gap: 2px;
+    margin-top: 2px; /* Small space below day number */
+    width: 100%; /* Take full width of day cell */
+}
+
+.sidebar-calendar-widget .event-marker {
+    background-color: var(--accent-color); /* Small colorful blocks */
+    border-radius: 2px; /* Square-ish blocks */
+    padding: 1px 2px; /* Padding for text */
+    font-size: 0.6em; /* Smaller font size for time */
+    color: white;
+    text-align: left;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis; /* Truncate long titles */
+    box-sizing: border-box; /* Include padding in block's total size */
+    cursor: hourglass; /* Changed cursor for event marker */
+}
