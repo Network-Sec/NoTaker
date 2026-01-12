@@ -8,12 +8,10 @@ import * as db from './services/db';
 import { useAppData } from './hooks/useAppData';
 import { useNavigationState } from './hooks/useNavigationState';
 import { useAppActions } from './hooks/useAppActions';
+import { useStreamScrolling } from './hooks/useStreamScrolling';
+import { useTaskActions } from './hooks/useTaskActions';
 
 import { IconSidebar } from './components/IconSidebar';
-import { Calendar } from './components/Calendar';
-import { DashboardStream } from './components/DashboardStream';
-import { MemoInput } from './components/MemoInput';
-import { EisenhowerMatrix } from './components/EisenhowerMatrix';
 import { ImageEditorModal } from './components/ImageEditorModal';
 import { TagsView } from './components/TagsView';
 import { GalleryView } from './components/GalleryView';
@@ -22,17 +20,12 @@ import { NotebookView } from './components/NotebookView';
 import { BookmarkView } from './components/BookmarkView';
 import { AiNotesView } from './components/AiNotesView';
 import SettingsView from './components/SettingsView';
-import { SidebarCalendarWidget } from './components/SidebarCalendarWidget';
 import { EventModal } from './components/EventModal';
 import { MonthlyCalendar as FullCalendarPage } from './components/MonthlyCalendar';
 import KnowledgeGraphView from './components/KnowledgeGraphView';
-import GlobalSearchBar from './components/GlobalSearchBar';
-import QuickScrollButtons from './components/QuickScrollButtons';
-import { AIConversationStream } from './components/AIConversationStream';
-import { AIInput } from './components/AIInput';
 import { IdentityOverview } from './components/IdentityOverview';
 import { DailyCounterFullView } from './components/DailyCounterFullView';
-import { DailyCounterSidebarWidget } from './components/DailyCounterSidebarWidget';
+import { DashboardPage } from './components/DashboardPage'; // Import the new page component
 
 const SEARCH_BAR_HEIGHT_OFFSET = 100;
 
@@ -78,14 +71,19 @@ const App = () => {
   } = useAppActions(
       memos, setMemos, updateMemo, setEditingMemo, setBookmarks, setToolboxItems, setEvents, setEditingEvent, setIsEventModalOpen, setSelectedDateForModal
   );
+
+  // 4. Task Actions Hook
+  const {
+      addTask,
+      toggleTaskCompleted,
+      updateTask,
+      moveTask,
+      deleteTask
+  } = useTaskActions(tasks, selectedDate, refreshTasks);
   
-  // Refs
+  // Refs (prev* refs are now inside useStreamScrolling)
   const dashboardStreamRef = useRef<HTMLDivElement>(null);
   const aiConversationStreamRef = useRef<HTMLDivElement>(null);
-  const prevSelectedDateRef = useRef<Date>(selectedDate);
-  const prevMainStreamViewModeRef = useRef<string>(mainStreamViewMode);
-  const prevMemosLength = useRef(0);
-  const initialScrollDoneRef = useRef(false);
   
   // --- Loading Spinner Logic ---
   const [minLoadTimeElapsed, setMinLoadTimeElapsed] = useState(false);
@@ -93,7 +91,7 @@ const App = () => {
   useEffect(() => {
       const timer = setTimeout(() => {
           setMinLoadTimeElapsed(true);
-      }, 5000); // 5 seconds delay
+      }, 2000); // 2 seconds delay
       return () => clearTimeout(timer);
   }, []);
 
@@ -104,73 +102,22 @@ const App = () => {
     refreshTasks(selectedDate);
   }, [selectedDate, refreshTasks]);
 
-  // --- Comprehensive Auto-Scrolling Effect for Memo Stream ---
-  useEffect(() => {
-    const streamElement = dashboardStreamRef.current;
-    
-    // Only proceed if we are in the dashboard memo view and NOT loading
-    if (!showLoadingScreen && streamElement && mainView === 'dashboard' && mainStreamViewMode === 'memo') {
-      const isScrolledToBottom = streamElement.scrollHeight - streamElement.clientHeight <= streamElement.scrollTop + 50; // Tolerance of 50px
-      
-      // Determine triggers
-      const isInitialLoadScroll = initialDataLoaded && minLoadTimeElapsed && !initialScrollDoneRef.current;
-      const isDateChange = !isSameDay(prevSelectedDateRef.current, selectedDate) && !continueTimestamp;
-      const isViewChange = prevMainStreamViewModeRef.current !== mainStreamViewMode;
-      const hasNewMemosAndUserAtBottom = memos.length > prevMemosLength.current && isScrolledToBottom;
-
-      if (isInitialLoadScroll || isDateChange || isViewChange || hasNewMemosAndUserAtBottom) {
-        setTimeout(() => {
-            if (streamElement) {
-                streamElement.scrollTop = streamElement.scrollHeight;
-            }
-        }, 50); // Small delay to allow DOM paint
-        
-        if (isInitialLoadScroll) {
-            initialScrollDoneRef.current = true;
-        }
-      }
-      
-      // Update refs for next run
-      prevMemosLength.current = memos.length;
-      prevSelectedDateRef.current = selectedDate;
-      prevMainStreamViewModeRef.current = mainStreamViewMode;
-
-    } else {
-        // Even if not scrolling, keep refs updated to prevent stale comparisons when switching back
-        prevMemosLength.current = memos.length;
-        prevSelectedDateRef.current = selectedDate;
-        prevMainStreamViewModeRef.current = mainStreamViewMode;
-    }
-  }, [memos, mainView, selectedDate, continueTimestamp, mainStreamViewMode, initialDataLoaded, showLoadingScreen, minLoadTimeElapsed]);
-
-  // Auto-scrolling effect for AI conversation stream
-  useEffect(() => {
-    if (!showLoadingScreen && aiConversationStreamRef.current && mainStreamViewMode === 'ai_conv') { // Only scroll when AI is active
-      aiConversationStreamRef.current.scrollTop = aiConversationStreamRef.current.scrollHeight;
-    }
-  }, [aiConversations, mainStreamViewMode, showLoadingScreen]);
-
-  useEffect(() => {
-    if (!showLoadingScreen && scrollToMemoId && mainStreamViewMode === 'memo') { // Only scroll memo stream
-      const performScroll = () => {
-        const memoElement = document.querySelector(`[data-memo-id="${scrollToMemoId}"]`);
-        if (memoElement && dashboardStreamRef.current) {
-          const targetScrollTop = Math.max(0, memoElement.offsetTop - SEARCH_BAR_HEIGHT_OFFSET);
-          dashboardStreamRef.current.scrollTo({
-            top: targetScrollTop,
-            behavior: 'smooth',
-          });
-          setScrollToMemoId(null); // Reset after scrolling
-        }
-      };
-
-      // Try immediately, and then again after a short delay in case of async rendering
-      performScroll();
-      const timer = setTimeout(performScroll, 100); 
-      return () => clearTimeout(timer); // Cleanup timeout if component unmounts
-    }
-  }, [memos, scrollToMemoId, mainStreamViewMode, showLoadingScreen]);
-
+  // --- Scrolling Logic Hook ---
+  useStreamScrolling({
+      memos,
+      aiConversations,
+      mainView,
+      mainStreamViewMode,
+      selectedDate,
+      continueTimestamp,
+      scrollToMemoId,
+      setScrollToMemoId,
+      initialDataLoaded,
+      showLoadingScreen,
+      minLoadTimeElapsed,
+      dashboardStreamRef,
+      aiConversationStreamRef
+  });
 
   // --- Memo Handlers ---
   const addMemo = useCallback(async (type: 'text' | 'image' | 'link', content: string, tags: string[]): Promise<number> => {
@@ -190,7 +137,7 @@ const App = () => {
         setScrollToMemoId(id); 
     }
     return id;
-  }, [newMemoTimestamp, continueTimestamp, selectedDate, addMemoAction]);
+  }, [newMemoTimestamp, continueTimestamp, selectedDate, addMemoAction, setScrollToMemoId]);
 
   // --- AI Conversation Handlers ---
   const onAddAIConversation = useCallback(async (item: Omit<AIConversationItem, 'id'>) => {
@@ -208,46 +155,6 @@ const App = () => {
     }
   }, [setAiConversations]);
 
-  // --- Task Handlers (To be refactored in TODO 13) ---
-  const addTask = useCallback(async (c: string, q: EisenhowerQuadrant) => { 
-    const dateString = selectedDate.toISOString().split('T')[0];
-    const newTasks = [...tasks, {id:`t-${Date.now()}`, content:c, quadrant:q, completed: false, date: dateString }]; 
-    await db.saveTasks(dateString, newTasks);
-    refreshTasks(selectedDate);
-  }, [selectedDate, tasks, refreshTasks]);
-
-  const toggleTaskCompleted = useCallback(async (id: string) => { 
-    const dateString = selectedDate.toISOString().split('T')[0];
-    const newTasks = tasks.map(task => 
-      task.id === id ? { ...task, completed: !task.completed } : task
-    );
-    await db.saveTasks(dateString, newTasks);
-    refreshTasks(selectedDate);
-  }, [selectedDate, tasks, refreshTasks]);
-
-  const updateTask = useCallback(async (updatedTask: Task) => { 
-    const dateString = selectedDate.toISOString().split('T')[0];
-    const newTasks = tasks.map(t => t.id === updatedTask.id ? updatedTask : t);
-    await db.saveTasks(dateString, newTasks);
-    refreshTasks(selectedDate);
-  }, [selectedDate, tasks, refreshTasks]);
-
-  const moveTask = useCallback(async (updatedTask: Task) => { 
-    const dateString = selectedDate.toISOString().split('T')[0];
-    const newTasks = tasks.map(t => t.id === updatedTask.id ? updatedTask : t);
-    await db.saveTasks(dateString, newTasks);
-    refreshTasks(selectedDate);
-  }, [selectedDate, tasks, refreshTasks]);
-
-  const deleteTask = useCallback(async (id: string) => { 
-    const dateString = selectedDate.toISOString().split('T')[0];
-    const newTasks = tasks.map(t => 
-      t.id === id ? { ...t, deletedOn: dateString } : t
-    );
-    await db.saveTasks(dateString, newTasks);
-    refreshTasks(selectedDate);
-  }, [selectedDate, tasks, refreshTasks]);
-
   // Derived state
   const handleTagSelect = useCallback((t: string) => setActiveTag(t), [setActiveTag]);
   const handleDateSelect = useCallback((d: Date) => setSelectedDate(d), [setSelectedDate]);
@@ -256,56 +163,30 @@ const App = () => {
   const filteredAIConversations = useMemo(() => aiConversations.filter(conv => isSameDay(new Date(conv.timestamp), selectedDate)), [aiConversations, selectedDate]);
 
   const renderMainView = () => {
-      switch (mainView) {      case 'dashboard':
-        return (
-          <div className="main-content-wrapper">
-            <aside className="secondary-sidebar">
-                <Calendar memos={memos} selectedDate={selectedDate} setSelectedDate={handleDateSelect} currentMonth={currentMonth} setCurrentMonth={setCurrentMonth} activeTag={activeTag} />
-                <EisenhowerMatrix 
-                    tasks={tasks} onAddTask={addTask} onUpdateTask={updateTask} onMoveTask={moveTask} onDeleteTask={deleteTask} onToggleTaskCompleted={toggleTaskCompleted} selectedDate={selectedDate} 
+      switch (mainView) {      
+        case 'dashboard':
+            return (
+                <DashboardPage
+                    memos={memos} bookmarks={bookmarks} history={history}
+                    tasks={tasks} events={events} aiConversations={aiConversations}
+                    filteredAIConversations={filteredAIConversations}
+                    mainStreamViewMode={mainStreamViewMode} setMainStreamViewMode={setMainStreamViewMode}
+                    selectedDate={selectedDate} setSelectedDate={handleDateSelect}
+                    currentMonth={currentMonth} setCurrentMonth={setCurrentMonth}
+                    activeTag={activeTag} setActiveTag={handleTagSelect}
+                    setMainView={setMainView} setScrollToMemoId={setScrollToMemoId}
+                    newMemoTimestamp={newMemoTimestamp} setNewMemoTimestamp={setNewMemoTimestamp}
+                    continueTimestamp={continueTimestamp} setContinueTimestamp={setContinueTimestamp}
+                    onAddTask={addTask} onUpdateTask={updateTask} onMoveTask={moveTask}
+                    onDeleteTask={deleteTask} onToggleTaskCompleted={toggleTaskCompleted}
+                    onAddEvent={addEvent} onDayClick={(date) => { setSelectedDateForModal(date); setIsEventModalOpen(true); setEditingEvent(undefined);}}
+                    onEventClick={handleEventClick}
+                    onUpdateMemo={updateMemo} onDeleteMemo={deleteMemo} onOpenImageEditor={handleOpenImageEditor}
+                    onAddMemo={addMemo} onUpdateMemoLinkPreview={onUpdateMemoLinkPreview}
+                    onAddAIConversation={onAddAIConversation} onAddToToolbox={addToolboxItem}
+                    dashboardStreamRef={dashboardStreamRef} aiConversationStreamRef={aiConversationStreamRef}
                 />
-                <SidebarCalendarWidget 
-                    events={events} onAddEvent={addEvent} onDayClick={(date) => { setSelectedDateForModal(date); setIsEventModalOpen(true); setEditingEvent(undefined);}} onEventClick={handleEventClick}
-                />
-                <QuickScrollButtons streamRef={dashboardStreamRef} />
-                <DailyCounterSidebarWidget setMainView={setMainView} />
-            </aside>
-            <main className="main-content">
-                  <GlobalSearchBar 
-                    setMainView={setMainView} setSelectedDate={setSelectedDate} setScrollToMemoId={setScrollToMemoId}
-                    mainStreamViewMode={mainStreamViewMode} setMainStreamViewMode={setMainStreamViewMode} 
-                  />
-                  {mainStreamViewMode === 'memo' ? (
-                    <>
-                      {activeTag && <div className="filter-status"><span>Filtering by: <strong>#{activeTag}</strong></span><button className="clear-filter-button" onClick={() => setActiveTag(null)}>Clear</button></div>}
-                      <DashboardStream 
-                        ref={dashboardStreamRef}
-                        memos={memos} bookmarks={bookmarks} history={history} 
-                        onTagSelect={setActiveTag} selectedDate={selectedDate} 
-                        onUpdateMemo={updateMemo} onDeleteMemo={deleteMemo} onOpenImageEditor={handleOpenImageEditor}
-                        onTimestampClick={(time) => { setNewMemoTimestamp(time); setContinueTimestamp(true); }}
-                        onAddToToolbox={addToolboxItem}
-                      />
-                      <MemoInput 
-                        onAddMemo={addMemo} timestamp={newMemoTimestamp} onTimestampChange={setNewMemoTimestamp}
-                        continueTimestamp={continueTimestamp} onContinueTimestampChange={setContinueTimestamp}
-                        onUpdateMemoLinkPreview={onUpdateMemoLinkPreview}
-                      />
-                    </>
-                  ) : (
-                    <>
-                      <AIConversationStream 
-                        ref={aiConversationStreamRef} aiConversations={filteredAIConversations} bookmarks={bookmarks} history={history} selectedDate={selectedDate} 
-                      />
-                      <AIInput 
-                        onAddAIConversation={onAddAIConversation} timestamp={newMemoTimestamp}
-                        onTimestampChange={setNewMemoTimestamp} onContinueTimestampChange={setContinueTimestamp} continueTimestamp={continueTimestamp}
-                      />
-                    </>
-                  )}
-            </main>
-          </div>
-        );
+            );
       case 'gallery': return <GalleryView memos={memos} onImageSelect={d => { setSelectedDate(d); setMainView('dashboard'); }} />;
       case 'notebooks': return <NotebookView />;
       case 'bookmarks': return <BookmarkView allBookmarksAndHistory={allBookmarksAndHistory} onAddBookmark={addBookmark} onDeleteBookmark={deleteBookmark} onAddToToolbox={addToolboxItem} />;

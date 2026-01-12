@@ -24,7 +24,7 @@ const QuickScrollButtons: React.FC<QuickScrollButtonsProps> = ({ streamRef }) =>
     if (!streamRef.current) return [];
     const streamItems: StreamItemData[] = [];
     // Ensure that UnifiedStreamItem or MemoItem/RightSideItem have data-timestamp
-    const elements = streamRef.current.querySelectorAll<HTMLElement>('.memo-item, .right-side-item');
+    const elements = streamRef.current.querySelectorAll<HTMLElement>('.memo-item');
 
     elements.forEach(element => {
       const timestampStr = element.dataset.timestamp;
