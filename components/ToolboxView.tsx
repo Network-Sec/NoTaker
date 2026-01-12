@@ -65,7 +65,7 @@ export const ToolboxView = ({ items = [], onDelete, onEdit }: ToolboxViewProps) 
                                         onClick={(e) => {
                                             e.preventDefault();
                                             e.stopPropagation();
-                                            if(confirm('REMOVE_TOOLBOX_ITEM?')) onDelete(item.id);
+                                            onDelete(item.id);
                                         }}
                                         title="REMOVE_TOOLBOX_ITEM"
                                     >

@@ -27,7 +27,7 @@ export const UnifiedStreamItem = ({
     onAddToToolbox
 }: UnifiedStreamItemProps) => {
     return (
-        <div className="unified-stream-row">
+ <div className="unified-stream-row">
             {/* Main Content (Memo or AI) */}
             <div className="unified-memo-content">
                 {contentItems.map(item => {

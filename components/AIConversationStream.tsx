@@ -81,7 +81,7 @@ const AIConversationStreamComponent = (
                 interleavedRightSideItems.push(item);
                 lastTimestamp = itemTime;
             });
-
+            
             return {
                 time, 
                 aiItems: aiItemsInCluster.map(item => item as AIConversationItem), // Cast back to AIConversationItem

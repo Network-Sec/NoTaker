@@ -184,28 +184,26 @@ export const MemoItem = ({ memo, onTagSelect, onUpdateMemo, onDeleteMemo, onOpen
                     <button className="menu-trigger" onClick={() => setShowMenu(!showMenu)}>⋮</button>
                     {showMenu && (
                         <div className="dropdown-menu">
-                            <button onClick={() => { setIsEditing(true); setShowMenu(false); }}>✎ Edit Content</button>
-                            <button onClick={() => { setIsEditing(true); setShowMenu(false); }}>🏷️ Edit Tags</button>
-                            <button onClick={() => { setIsEditingTime(true); setShowMenu(false); }}>⏰ Edit Time</button>
-                            {memo.type === 'image' && (
-                                <button onClick={() => { onOpenImageEditor(memo); setShowMenu(false); }}>✂️ Crop/Edit Image</button>
-                            )}
-                            {memo.type === 'link' && onAddToToolbox && ( // New menu item for links
-                                <button onClick={async () => {
-                                    setShowMenu(false);
-                                    try {
-                                        await onAddToToolbox({ url: memo.content, title: memo.title || memo.content });
-                                        console.log("Toolbox item added successfully from MemoItem."); // Log success
-                                    } catch (error) {
-                                        console.error("Failed to add to Toolbox from MemoItem:", error); // Log failure
-                                    }
-                                }}>
-                                    ➕ To Toolbox
-                                </button>
-                            )}
-                            <div className="divider" />
-                            <button className="delete-btn" onClick={() => { onDeleteMemo(memo.id); }}>🗑️ Delete</button>
-                        </div>
+                                                        <button key="edit-content-btn" onClick={() => { setIsEditing(true); setShowMenu(false); }}>✎ Edit Content</button>
+                                                        <button key="edit-tags-btn" onClick={() => { setIsEditing(true); setShowMenu(false); }}>🏷️ Edit Tags</button>
+                                                        <button key="edit-time-btn" onClick={() => { setIsEditingTime(true); setShowMenu(false); }}>⏰ Edit Time</button>
+                                                        {memo.type === 'link' && onAddToToolbox && (
+                                                            <button key="add-to-toolbox-btn" onClick={async () => {
+                                                                setShowMenu(false);
+                                                                try {
+                                                                    await onAddToToolbox({ url: memo.content, title: memo.title || memo.content });
+                                                                } catch (error) {
+                                                                    // Error handled by onAddToToolbox in parent or general error handling
+                                                                }
+                                                            }}>
+                                                                ➕ To Toolbox
+                                                            </button>
+                                                        )}
+                                                        {memo.type === 'image' && (
+                                                            <button key="crop-image-btn" onClick={() => { onOpenImageEditor(memo); setShowMenu(false); }}>✂️ Crop/Edit Image</button>
+                                                        )}
+                                                        <div className="divider" />
+                                                        <button key="delete-btn" className="delete-btn" onClick={() => { onDeleteMemo(memo.id); }}>🗑️ Delete</button>                                                    </div>
                     )}
                 </div>
             </div>
@@ -275,4 +273,4 @@ export const MemoItem = ({ memo, onTagSelect, onUpdateMemo, onDeleteMemo, onOpen
                         )}
                     </div>
                 );
-            };
+            }; 

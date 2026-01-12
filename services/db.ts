@@ -161,10 +161,35 @@ export const createEvent = async (event: Omit<Event, 'id'>): Promise<number> => 
 
 // --- Utils ---
 export const getLinkPreview = async (url: string): Promise<LinkPreviewData | null> => {
-    try {
-        const response = await fetch(`${API_URL}/api/link-preview?url=${encodeURIComponent(url)}`);
-        return response.ok ? await response.json() : null;
-    } catch (error) { return null; }
+    const MAX_RETRIES = 5;
+    let retryCount = 0;
+
+    while (retryCount < MAX_RETRIES) {
+        try {
+            const response = await fetch(`${API_URL}/api/link-preview?url=${encodeURIComponent(url)}`);
+            if (response.ok) {
+                return await response.json();
+            } else if (response.status >= 500) { // Retry on server errors
+                console.warn(`[getLinkPreview] Server error (${response.status}) for ${url}, retrying... (${retryCount + 1}/${MAX_RETRIES})`);
+                retryCount++;
+                const delay = Math.pow(2, retryCount) * 1000; // Exponential backoff
+                await new Promise(resolve => setTimeout(resolve, delay));
+                continue; // Try again
+            } else { // Client errors (4xx) or other non-retryable issues
+                console.error(`[getLinkPreview] Non-retryable HTTP error (${response.status}) for ${url}`);
+                return null;
+            }
+        } catch (error) { // Network errors
+            console.warn(`[getLinkPreview] Network error for ${url}, retrying... (${retryCount + 1}/${MAX_RETRIES})`, error);
+            retryCount++;
+            const delay = Math.pow(2, retryCount) * 1000; // Exponential backoff
+            await new Promise(resolve => setTimeout(resolve, delay));
+            continue; // Try again
+        }
+    }
+
+    console.error(`[getLinkPreview] Max retries reached for ${url}, failed to get link preview.`);
+    return null;
 };
 
 export const updateMemoLinkPreview = async (id: number, linkPreview: LinkPreviewData): Promise<void> => {

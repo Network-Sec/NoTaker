@@ -212,7 +212,7 @@ export const DailyCounterSidebarWidget = ({ setMainView }: DailyCounterSidebarWi
             <div className="max-h-64 overflow-hidden"> {/* Increased height, no scrollbar */}
                 <table className="w-full text-left text-xs text-gray-400">
                     <thead className="text-[10px] uppercase bg-white/5">
-                        <tr><th scope="col" className="px-1 py-1">Time</th><th scope="col" className="px-1 py-1 text-center">Coffee</th><th scope="col" className="px-1 py-1 text-center">Milk</th><th scope="col" className="px-1 py-1 text-center">TOT Coffee</th><th scope="col" className="px-1 py-1 text-center">TOT Milk</th><th scope="col" className="px-1 py-1 text-right"></th> {/* For edit button */}</tr>
+                        <tr><th scope="col" className="px-1 py-1">Time</th><th scope="col" className="px-1 py-1 text-center">Coffee</th><th scope="col" className="px-1 py-1 text-center">Milk</th><th scope="col" className="px-1 py-1 text-center">TOT Coffee</th><th scope="col" className="px-1 py-1 text-center">TOT Milk</th><th scope="col" className="px-1 py-1 text-right"></th>{/* For edit button */}</tr>
                     </thead>
                     <tbody>
                         {entries.slice(-5).map((entry) => ( // Show only last 5 entries, chronological order

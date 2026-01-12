@@ -1,7 +1,7 @@
 export interface Memo {
     id: number;
     timestamp: string;
-    type: 'text' | 'code' | 'markdown' | 'image';
+    type: 'text' | 'code' | 'markdown' | 'image' | 'link';
     content: string;
     tags: string[];
     linkPreview?: LinkPreviewData;

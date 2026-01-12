@@ -374,15 +374,7 @@ export const DailyCounterFullView = ({ setMainView }: DailyCounterFullViewProps)
                         <h3 className="text-xl font-bold text-white mb-4 uppercase">Entry History</h3>
                         <table className="w-full text-left text-sm text-gray-300 border-collapse">
                             <thead className="text-xs text-gray-400 uppercase bg-white/5">
-                                <tr>
-                                    <th scope="col" className="px-4 py-3">Date</th>
-                                    <th scope="col" className="px-4 py-3">Time</th>
-                                    <th scope="col" className="px-4 py-3 text-center">Coffee Used</th>
-                                    <th scope="col" className="px-4 py-3 text-center">Milk Used</th>
-                                    <th scope="col" className="px-4 py-3 text-center">Coffee Left</th>
-                                    <th scope="col" className="px-4 py-3 text-center">Milk Left</th>
-                                    <th scope="col" className="px-4 py-3 text-right"></th> {/* For edit button */}
-                                </tr>
+                                <tr><th scope="col" className="px-4 py-3">Date</th><th scope="col" className="px-4 py-3">Time</th><th scope="col" className="px-4 py-3 text-center">Coffee Used</th><th scope="col" className="px-4 py-3 text-center">Milk Used</th><th scope="col" className="px-4 py-3 text-center">Coffee Left</th><th scope="col" className="px-4 py-3 text-center">Milk Left</th><th scope="col" className="px-4 py-3 text-right"></th>{/* For edit button */}</tr>
                             </thead>
                             <tbody>
                                 {entries.map((entry) => ( // Show newest last (at bottom)

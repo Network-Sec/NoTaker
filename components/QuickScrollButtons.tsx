@@ -10,10 +10,20 @@ interface StreamItemData {
   timestamp: number; // Unix timestamp
 }
 
+// Helper to get the relative offsetTop of an element to a specific container
+const getRelativeOffsetTop = (element: HTMLElement, container: HTMLElement): number => {
+    const elementRect = element.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+    // Calculate the element's top position relative to the container's top,
+    // and add the container's scrollTop to get the position within the scrollable content.
+    return elementRect.top - containerRect.top + container.scrollTop;
+};
+
 const QuickScrollButtons: React.FC<QuickScrollButtonsProps> = ({ streamRef }) => {
   const getSortedStreamItems = (): StreamItemData[] => {
     if (!streamRef.current) return [];
     const streamItems: StreamItemData[] = [];
+    // Ensure that UnifiedStreamItem or MemoItem/RightSideItem have data-timestamp
     const elements = streamRef.current.querySelectorAll<HTMLElement>('.memo-item, .right-side-item');
 
     elements.forEach(element => {
@@ -21,7 +31,8 @@ const QuickScrollButtons: React.FC<QuickScrollButtonsProps> = ({ streamRef }) =>
       if (timestampStr) {
         streamItems.push({
           element,
-          offsetTop: element.offsetTop,
+          // Use the helper to get the offset relative to streamRef.current
+          offsetTop: getRelativeOffsetTop(element, streamRef.current),
           timestamp: new Date(timestampStr).getTime(),
         });
       }

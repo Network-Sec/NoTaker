@@ -415,8 +415,11 @@ if (fs.existsSync(PUBLIC_DIR_FALLBACK)) {
 const startServer = () => {
     app.listen(PORT, () => {
         console.log(`Server listening on port ${PORT}`);
-        if(browserImporter && browserImporter.startScheduledImport) {
+        // START SCHEDULED IMPORT (CRON)
+        if(browserImporter && typeof browserImporter.startScheduledImport === 'function') {
             browserImporter.startScheduledImport(appDb);
+        } else {
+             console.warn("[Main] browserImporter.startScheduledImport is not a function or missing.");
         }
     });
 };

@@ -3,27 +3,29 @@
 .global-search-bar-container {
     position: relative;
     flex-grow: 1; /* Allow it to take available space */
-    max-width: 500px; /* Or adjust as needed */
+    /* Removed max-width here to allow dropdown to expand */
     color: #fff;
     backdrop-filter: blur(5px);
     z-index: 100; /* Keep z-index high for dropdown */
 }
 .global-search-bar-container input {
     width: 100%;
+    max-width: 500px; /* Constrain input width here */
     padding: 10px 15px;
     font-size: 1rem;
     border-radius: 0;
     border: 1px solid #53ffff94;
-    background-color: #00000074;
+    background-color: rgba(0, 0, 0, 0.3); /* More transparent for blur */
     color: #fff;
 }
 
 .search-results-dropdown {
     position: absolute;
     top: 100%;
-    left: 0;
-    right: 0;
-    background-color: rgba(0,0,0,0.8);
+    left: 50%; /* Center the dropdown */
+    transform: translateX(calc(-50% + 10px)); /* Shift 10px right from center */
+    width: 530px; /* Make dropdown 10px smaller */
+    background-color: rgba(0,0,0,0.5); /* More transparent for blur */
     border: 1px solid var(--border-color);
     border-top: none;
     border-radius: 0;
@@ -31,7 +33,7 @@
     overflow-y: auto;
     overflow-x: hidden;
     z-index: 1000;
-
+    backdrop-filter: blur(5px); /* Ensure dropdown also blurs */
 }
 
 .search-result-item {

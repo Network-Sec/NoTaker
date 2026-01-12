@@ -49,7 +49,7 @@ interface BookmarkViewProps {
     allBookmarksAndHistory: Array<Bookmark | BrowserHistoryEntry>;
     onAddBookmark: (url: string, title: string) => void;
     onDeleteBookmark: (id: string) => void;
-    onAddToToolbox?: (item: { url: string; title: string }) => void;
+    onAddToToolbox?: (item: { url: string; title: string }) => Promise<void>; // Ensure it returns a Promise<void>
 }
 
 const ITEMS_PER_PAGE = 250;
@@ -63,6 +63,7 @@ export const BookmarkView = ({ allBookmarksAndHistory, onAddBookmark, onDeleteBo
     const [searchQuery, setSearchQuery] = useState<string>(''); 
     const [viewType, setViewType] = useState<'all' | 'history' | 'bookmarks'>('all'); // New toggle state
     const [currentPage, setCurrentPage] = useState(1); // Pagination state
+    const [addingItemId, setAddingItemId] = useState<string | null>(null); // State to track item being added
 
     // Filter Logic
     const filteredAndSortedItems = useMemo(() => {
@@ -275,14 +276,34 @@ export const BookmarkView = ({ allBookmarksAndHistory, onAddBookmark, onDeleteBo
                                     {/* Toolbox Button (Pulled out of main wrapper) */}
                                     {onAddToToolbox && (
                                         <button 
-                                            className="w-9 h-9 flex items-center justify-center rounded border border-white/10 bg-white/5 text-gray-400 hover:text-techCyan hover:border-techCyan/50 hover:bg-techCyan/10 transition-all shadow-sm"
+                                            className="w-9 h-9 flex items-center justify-center rounded border border-white/10 bg-white/5 text-gray-400 hover:text-techCyan hover:border-techCyan/50 hover:bg-techCyan/10 transition-all shadow-sm relative hover:scale-110 hover:shadow-techCyan cursor-pointer"
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                onAddToToolbox({ url: item.url, title: item.title });
+                                                setAddingItemId(item.id); // Set loading state for this item
+                                                
+                                                // Wrap async operation in IIFE to prevent blocking the event handler
+                                                (async () => {
+                                                    try {
+                                                        await onAddToToolbox({ url: item.url, title: item.title });
+                                                    } catch (error) {
+                                                        console.error("Failed to add to Toolbox:", error);
+                                                        alert('Failed to add to Toolbox.');
+                                                    } finally {
+                                                        setAddingItemId(null); // Reset loading state
+                                                    }
+                                                })();
                                             }}
+                                            disabled={addingItemId === item.id} // Disable button while loading
                                             title="Add to Toolbox"
                                         >
-                                            <ToolboxIcon size="1.1em" />
+                                            {addingItemId === item.id ? (
+                                                <svg className="animate-spin h-5 w-5 text-techCyan" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                </svg>
+                                            ) : (
+                                                <ToolboxIcon size="1.1em" />
+                                            )}
                                         </button>
                                     )}
                                 </div>
